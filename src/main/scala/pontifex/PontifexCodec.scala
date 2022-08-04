@@ -11,8 +11,30 @@ import scala.annotation.tailrec
 import scala.collection.mutable.ArrayBuffer
 
 object PontifexCodec extends App {
-  private val pontifex = new Pontifex("АБГДЕЖЗИКЛМНОПРСТУФХЦЧШЫЮЯ1256789.,", "АВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЫЮЯ125679")
-  //private val pontifex = new Pontifex("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+
+  private val pontifex = if (args.nonEmpty && args(0).contains("--config")) {
+    if (args.length < 2) {
+      sys.error("provide path to config")
+    }
+    val file = args(1)
+    val config = io.Source.fromFile(file).getLines().toSeq
+    if (config.length == 3 || config.length > 4 || config.isEmpty) {
+      sys.error("wrong config format. Should be:\nalphabet1\nalphabet2\ncards\ncolors")
+    }
+    val alphabet1 = config.head
+    val alphabet2 = if (config.length > 1) config(1) else alphabet1
+    val cards =
+      if (config.length == 4) config(2).zip(config(3)).toArray
+      else {
+        (alphabet2.map(c => (c, 'G')).toList :::
+          alphabet2.map(c => (c, 'B')).toList :::
+          alphabet2.take(2).map(c => (c, 'R')).toList).toArray
+      }
+    new Pontifex(alphabet1, alphabet2, cards)
+  } else {
+    //new Pontifex("АБГДЕЖЗИКЛМНОПРСТУФХЦЧШЫЮЯ1256789.,", "АВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЫЮЯ125679")
+    new Pontifex("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+  }
 
   private var deck = pontifex.deck("")
 
@@ -23,6 +45,7 @@ object PontifexCodec extends App {
 
   private var mode: PontifexCodecMode = PontifexCodecMode.Key
   private var charCount = 1
+
   private val firstRowMap = Map(
     1 -> 1,
     2 -> 2,
@@ -201,8 +224,9 @@ object PontifexCodec extends App {
             keySequence += number
           }
           setRelCurPos(-1, -1)
-          term.setForegroundColor(ANSI.BLUE)
-          term.putCharacter(pontifex.getKeySymbol(keySequence(charCount - 1)))
+          val (card, color) = pontifex.getCard(keySequence(charCount - 1) - 1)
+          setColor(color)
+          term.putCharacter(card)
           setRelCurPos(-1, -1)
           val decryptedC = pontifex.decryptSymbol(c, keySequence(charCount - 1))
           term.setForegroundColor(ANSI.GREEN)
@@ -243,8 +267,9 @@ object PontifexCodec extends App {
             keySequence += number
           }
           setRelCurPos(-1, 1)
-          term.setForegroundColor(ANSI.BLUE)
-          term.putCharacter(pontifex.getKeySymbol(keySequence(charCount - 1)))
+          val (card, color) = pontifex.getCard(keySequence(charCount - 1) - 1)
+          setColor(color)
+          term.putCharacter(card)
           setRelCurPos(-1, 1)
           val encryptedC = pontifex.encryptSymbol(c, keySequence(charCount - 1))
           term.setForegroundColor(ANSI.YELLOW)
@@ -366,10 +391,20 @@ object PontifexCodec extends App {
   }
 
   private def printCard(c: Int): Unit = {
-    if (c <= pontifex.alphabet2.length) term.setForegroundColor(ANSI.GREEN)
-    else if (c <= pontifex.alphabet2.length * 2) term.setForegroundColor(ANSI.BLUE)
-    else term.setForegroundColor(ANSI.RED)
-    term.putCharacter(pontifex.alphabet2((c - 1) % pontifex.alphabet2.length))
+    val (card, color) = pontifex.getCard(c - 1)
+    setColor(color)
+    term.putCharacter(card)
+  }
+
+  private def setColor(color: Char): Unit = {
+    color match {
+      case 'R' => term.setForegroundColor(ANSI.RED)
+      case 'G' => term.setForegroundColor(ANSI.GREEN)
+      case 'B' => term.setForegroundColor(ANSI.BLUE)
+      case 'Y' => term.setForegroundColor(ANSI.YELLOW)
+      case 'C' => term.setForegroundColor(ANSI.CYAN)
+      case _ =>
+    }
   }
 
   private def moveCaret(): Unit = {

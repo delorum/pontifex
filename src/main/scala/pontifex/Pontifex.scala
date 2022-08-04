@@ -2,7 +2,15 @@ package pontifex
 
 import scala.annotation.tailrec
 
-class Pontifex(val alphabet1: String, val alphabet2: String) {
+class Pontifex(val alphabet1: String, val alphabet2: String, cards: Array[(Char, Char)]) {
+  def this(alphabet1: String, alphabet2: String) =
+    this(
+      alphabet1,
+      alphabet2,
+      (alphabet2.map(c => (c, 'G')).toList :::
+        alphabet2.map(c => (c, 'B')).toList :::
+        alphabet2.take(2).map(c => (c, 'R')).toList).toArray
+    )
   def this(alphabet: String) = this(alphabet, alphabet)
 
   private val alphabet1Set: Set[Char] = alphabet1.toSet
@@ -19,9 +27,16 @@ class Pontifex(val alphabet1: String, val alphabet2: String) {
   val Joker1: Int = DeckLen - 1
   val Joker2: Int = DeckLen
 
-  require(alphabet1.length == alphabet2.length)
-  require(alphabet1.toSet.size == alphabet1.length)
-  require(alphabet2.toSet.size == alphabet2.length)
+  require(alphabet1.length == alphabet2.length, "alphabet2 length should be equal to alphabet1 length")
+  require(alphabet1.toSet.size == alphabet1.length, "alphabet1 symbols should be unique")
+  require(alphabet2.toSet.size == alphabet2.length, "alphabet2 symbols should be unique")
+  require(cards.length == alphabet2.length * 2 + 2, "wrong cards length. Should be: alphabet * 2 + 2")
+  require(cards.toSet.size == cards.length, "cards must be unique")
+  require(cards.map(_._2).forall(c => "RGBCY".contains(c)), "supported card colors: RGBCY")
+
+  def getCard(c: Int): (Char, Char) = {
+    cards(c)
+  }
 
   def containsOpen(c: Char): Boolean = {
     alphabet1Set.contains(replace(c.toUpper))
