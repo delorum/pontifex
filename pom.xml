@@ -1,0 +1,240 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>aborunov</groupId>
+  <artifactId>pontifex</artifactId>
+  <version>1.0-SNAPSHOT</version>
+  <inceptionYear>2020</inceptionYear>
+  <properties>
+    <scala.version>2.12.11</scala.version>
+    <scala.major.version>2.12</scala.major.version>
+    <scoverage.plugin.version>1.3.0</scoverage.plugin.version>
+    <scalatest.version>3.0.1</scalatest.version>
+    <vertis.commons.version>1.0.265</vertis.commons.version>
+  </properties>
+
+  <distributionManagement>
+    <repository>
+      <id>yandex_vertis_releases</id>
+      <url>${releases-repo}</url>
+    </repository>
+    <snapshotRepository>
+      <id>yandex_vertis_snapshots</id>
+      <url>${snapshots-repo}</url>
+    </snapshotRepository>
+  </distributionManagement>
+
+  <repositories>
+    <repository>
+      <id>scala-tools.org</id>
+      <name>Scala-Tools Maven2 Repository</name>
+      <url>http://scala-tools.org/repo-releases</url>
+    </repository>
+  </repositories>
+
+  <pluginRepositories>
+    <pluginRepository>
+      <id>scala-tools.org</id>
+      <name>Scala-Tools Maven2 Repository</name>
+      <url>http://scala-tools.org/repo-releases</url>
+    </pluginRepository>
+  </pluginRepositories>
+
+  <dependencies>
+    <dependency>
+      <groupId>com.googlecode.lanterna</groupId>
+      <artifactId>lanterna</artifactId>
+      <version>3.1.1</version>
+    </dependency>
+    <dependency>
+      <groupId>joda-time</groupId>
+      <artifactId>joda-time</artifactId>
+      <version>2.9.2-tzdata-2016b</version>
+    </dependency>
+    <dependency>
+      <groupId>org.joda</groupId>
+      <artifactId>joda-convert</artifactId>
+      <version>1.8.1</version>
+    </dependency>
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>27.1-jre</version>
+    </dependency>
+    <dependency>
+      <groupId>org.scala-lang</groupId>
+      <artifactId>scala-library</artifactId>
+      <version>${scala.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>junit</groupId>
+      <artifactId>junit</artifactId>
+      <version>4.4</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <sourceDirectory>src/main/scala</sourceDirectory>
+    <testSourceDirectory>src/test/scala</testSourceDirectory>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>3.1</version>
+        <configuration>
+          <source>1.8</source>
+          <target>1.8</target>
+        </configuration>
+      </plugin>
+
+      <!--Compiles Scala code-->
+      <plugin>
+        <groupId>net.alchim31.maven</groupId>
+        <artifactId>scala-maven-plugin</artifactId>
+        <version>3.2.2</version>
+        <configuration>
+          <recompileMode>incremental</recompileMode>
+          <scalaCompatVersion>${scala.major.version}</scalaCompatVersion>
+          <scalaVersion>${scala.version}</scalaVersion>
+          <args>
+            <arg>-unchecked</arg>
+            <arg>-deprecation</arg>
+            <arg>-explaintypes</arg>
+            <arg>-feature</arg>
+            <arg>-Xlint</arg>
+            <arg>-target:jvm-1.8</arg>
+            <!--<arg>-Ydebug</arg> -->
+            <!-- TODO включить Fatal warnings, когда разберусь с db.getDocument -->
+            <!--<arg>-Xfatal-warnings</arg>-->
+            <!--<arg>-Ylog-classpath</arg>-->
+          </args>
+          <jvmArgs>
+            <jvmArg>-Xmx2g</jvmArg>
+            <jvmArg>-Xss2M</jvmArg>
+          </jvmArgs>
+        </configuration>
+        <executions>
+          <execution>
+            <goals>
+              <goal>compile</goal>
+              <goal>testCompile</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Runs tests and reports results-->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>2.19.1</version>
+        <configuration>
+          <includes>
+            <include>**/*Test.class</include>
+            <include>**/*Spec.class</include>
+          </includes>
+          <trimStackTrace>false</trimStackTrace>
+        </configuration>
+      </plugin>
+
+      <!-- Makes possible inheriting test code -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>2.6</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>test-jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Finds inconsistency in dependencies (same artifacts with different versions)
+           and fails build if such ones exist.
+           For details see http://maven.apache.org/enforcer/maven-enforcer-plugin/
+      -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <version>1.4.1</version>
+        <executions>
+          <execution>
+            <id>enforce</id>
+            <configuration>
+              <rules>
+                <DependencyConvergence/>
+                <!--<requireSameVersions>
+                    <dependencies>
+                        <dependency>ru.yandex.vertis:*</dependency>
+                    </dependencies>
+                </requireSameVersions>-->
+                <requireSameVersions>
+                  <dependencies>
+                    <dependency>io.prometheus:*</dependency>
+                  </dependencies>
+                </requireSameVersions>
+                <bannedDependencies>
+                  <!-- needed for asciidoctor -->
+                  <!--<excludes>org.jruby:jruby-complete</excludes>-->
+
+                  <excludes>
+                    <exclude>log4j:log4j</exclude>
+                    <exclude>*:*_2.11</exclude>
+                  </excludes>
+                </bannedDependencies>
+              </rules>
+            </configuration>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Published sources.jar -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>2.0.4</version>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <goals>
+              <goal>jar</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.scoverage</groupId>
+        <artifactId>scoverage-maven-plugin</artifactId>
+        <version>${scoverage.plugin.version}</version>
+        <configuration>
+          <aggregate>true</aggregate> <!-- for aggregated report -->
+          <highlighting>true</highlighting>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>exec-maven-plugin</artifactId>
+        <version>1.3.2</version>
+      </plugin>
+    </plugins>
+  </build>
+  <reporting>
+    <plugins>
+      <plugin>
+        <groupId>org.scala-tools</groupId>
+        <artifactId>maven-scala-plugin</artifactId>
+        <configuration>
+          <scalaVersion>${scala.version}</scalaVersion>
+        </configuration>
+      </plugin>
+    </plugins>
+  </reporting>
+</project>
