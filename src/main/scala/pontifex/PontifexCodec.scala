@@ -7,34 +7,43 @@ import com.googlecode.lanterna.terminal.{DefaultTerminalFactory, Terminal}
 import pontifex.PontifexCodecMode.{Decoding, Encoding, Key}
 
 import java.awt.Toolkit
+import java.io.{FileInputStream, InputStreamReader}
+import java.nio.charset.Charset
+import java.util.Properties
 import scala.annotation.tailrec
 import scala.collection.mutable.ArrayBuffer
 
 object PontifexCodec extends App {
 
-  private val pontifex = if (args.nonEmpty && args(0).contains("--config")) {
+  private val (pontifex, lang) = if (args.nonEmpty && args(0).contains("--config")) {
     if (args.length < 2) {
       sys.error("provide path to config")
     }
-    val file = args(1)
-    val config = io.Source.fromFile(file).getLines().toSeq
-    if (config.length == 3 || config.length > 4 || config.isEmpty) {
-      sys.error("wrong config format. Should be:\nalphabet1\nalphabet2\ncards\ncolors")
-    }
-    val alphabet1 = config.head
-    val alphabet2 = if (config.length > 1) config(1) else alphabet1
-    val cards =
-      if (config.length == 4) config(2).zip(config(3)).toArray
-      else {
-        (alphabet2.map(c => (c, 'G')).toList :::
-          alphabet2.map(c => (c, 'B')).toList :::
-          alphabet2.take(2).map(c => (c, 'R')).toList).toArray
-      }
-    new Pontifex(alphabet1, alphabet2, cards)
+    loadFromConfig
   } else {
     //new Pontifex("АБГДЕЖЗИКЛМНОПРСТУФХЦЧШЫЮЯ1256789.,", "АВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЫЮЯ125679")
-    new Pontifex("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+    (new Pontifex("ABCDEFGHIJKLMNOPQRSTUVWXYZ"), "en")
   }
+
+  private def loadFromConfig: (Pontifex, String) = {
+    val file = args(1)
+    val config = new Properties()
+    config.load(new InputStreamReader(new FileInputStream(file), Charset.forName("UTF-8")))
+    val alphabet1 = config.getProperty("alphabet1")
+    require(alphabet1 != null, "alphabet required")
+    val alphabet2 = config.getProperty("alphabet2", alphabet1)
+    val cards = {
+      val cardSymbols = config.getProperty("cards", alphabet2 + alphabet2 + alphabet2.take(2))
+      val cardColors = config.getProperty("cardColors", alphabet2.map(_ => 'G') + alphabet2.map(_ => 'B') + alphabet2.take(2).map(_ => 'R'))
+      cardSymbols.zip(cardColors).toArray
+    }
+    val lang = config.getProperty("lang", "en")
+    require(lang == "ru" || lang == "en", "only ru and en lang are supported")
+    (new Pontifex(alphabet1, alphabet2, cards), lang)
+  }
+
+  val keyWord = if (lang == "ru") "Ключ: " else "Key: "
+  val deckWord = if (lang == "ru") "Колода: " else "Deck: "
 
   private var deck = pontifex.deck("")
 
@@ -45,6 +54,7 @@ object PontifexCodec extends App {
 
   private var mode: PontifexCodecMode = PontifexCodecMode.Key
   private var charCount = 1
+  private var keyIsHidden = false
 
   private val firstRowMap = Map(
     1 -> 1,
@@ -129,6 +139,9 @@ object PontifexCodec extends App {
           mode = switch(mode)
           setCharCount()
           printCursorPositionAndCharCount()
+        case 'k' =>
+          keyIsHidden = !keyIsHidden
+          if (keyIsHidden) hideKey() else showKey()
         case '1' =>
           deck = pontifex.step1(deck)
           printDeck()
@@ -181,7 +194,6 @@ object PontifexCodec extends App {
           term.putCharacter(' ')
           setRelCurPos(-1, 0)
           reverseShuffleDeck(key.remove(key.length - 1))
-          printCursorPositionAndCharCount()
         }
       case KeyType.Character =>
         val c = k.getCharacter.toChar.toUpper
@@ -190,10 +202,10 @@ object PontifexCodec extends App {
           term.setForegroundColor(ANSI.GREEN)
           term.putCharacter(c)
           shuffleDeck(c)
-          printCursorPositionAndCharCount()
         }
       case _ =>
     }
+    printCursorPositionAndCharCount()
   }
 
   private def decodingMode(k: KeyStroke): Unit = {
@@ -201,41 +213,41 @@ object PontifexCodec extends App {
       case KeyType.ArrowUp =>
         setRelCurPos(0, -1)
         setCharCount()
-        printCursorPositionAndCharCount()
       case KeyType.ArrowDown =>
         setRelCurPos(0, 1)
         setCharCount()
-        printCursorPositionAndCharCount()
       case KeyType.ArrowLeft =>
         setRelCurPos(-1, 0)
         setCharCount()
-        printCursorPositionAndCharCount()
       case KeyType.ArrowRight =>
         setRelCurPos(1, 0)
         setCharCount()
-        printCursorPositionAndCharCount()
       case KeyType.Character =>
         val c = k.getCharacter.toChar.toUpper
-        if (pontifex.containsEncrypted(c) && charCount != -1) {
-          term.setForegroundColor(ANSI.YELLOW)
-          term.putCharacter(c)
-          if (keySequence.length < charCount) {
-            val number: Int = generateNextKeyNumber
-            keySequence += number
-          }
-          setRelCurPos(-1, -1)
-          val (card, color) = pontifex.getCard(keySequence(charCount - 1) - 1)
-          setColor(color)
-          term.putCharacter(card)
-          setRelCurPos(-1, -1)
-          val decryptedC = pontifex.decryptSymbol(c, keySequence(charCount - 1))
-          term.setForegroundColor(ANSI.GREEN)
-          term.putCharacter(decryptedC)
-          setRelCurPos(0, 2)
-          moveCaret()
-          printCursorPositionAndCharCount()
-        }
+        decode(c)
       case _ =>
+    }
+    printCursorPositionAndCharCount()
+  }
+
+  private def decode(c: Char): Unit = {
+    if (pontifex.containsEncrypted(c) && charCount != -1) {
+      term.setForegroundColor(ANSI.YELLOW)
+      term.putCharacter(c)
+      if (keySequence.length < charCount) {
+        val number: Int = generateNextKeyNumber
+        keySequence += number
+      }
+      setRelCurPos(-1, -1)
+      val (card, color) = pontifex.getCard(keySequence(charCount - 1) - 1)
+      setColor(color)
+      term.putCharacter(card)
+      setRelCurPos(-1, -1)
+      val decryptedC = pontifex.decryptSymbol(c, keySequence(charCount - 1))
+      term.setForegroundColor(ANSI.GREEN)
+      term.putCharacter(decryptedC)
+      setRelCurPos(0, 2)
+      moveCaret()
     }
   }
 
@@ -244,41 +256,43 @@ object PontifexCodec extends App {
       case KeyType.ArrowUp =>
         setRelCurPos(0, -1)
         setCharCount()
-        printCursorPositionAndCharCount()
       case KeyType.ArrowDown =>
         setRelCurPos(0, 1)
         setCharCount()
-        printCursorPositionAndCharCount()
       case KeyType.ArrowLeft =>
         setRelCurPos(-1, 0)
         setCharCount()
-        printCursorPositionAndCharCount()
       case KeyType.ArrowRight =>
         setRelCurPos(1, 0)
         setCharCount()
-        printCursorPositionAndCharCount()
+      case KeyType.Enter =>
+        encode(pontifex.getRandomOpenSymbol)
       case KeyType.Character =>
         val c = k.getCharacter.toChar.toUpper
-        if (pontifex.containsOpen(c) && charCount != -1) {
-          term.setForegroundColor(ANSI.GREEN)
-          term.putCharacter(c)
-          if (keySequence.length < charCount) {
-            val number: Int = generateNextKeyNumber
-            keySequence += number
-          }
-          setRelCurPos(-1, 1)
-          val (card, color) = pontifex.getCard(keySequence(charCount - 1) - 1)
-          setColor(color)
-          term.putCharacter(card)
-          setRelCurPos(-1, 1)
-          val encryptedC = pontifex.encryptSymbol(c, keySequence(charCount - 1))
-          term.setForegroundColor(ANSI.YELLOW)
-          term.putCharacter(encryptedC)
-          setRelCurPos(0, -2)
-          moveCaret()
-          printCursorPositionAndCharCount()
-        }
+        encode(c)
       case _ =>
+    }
+    printCursorPositionAndCharCount()
+  }
+
+  private def encode(c: Char): Unit = {
+    if (pontifex.containsOpen(c) && charCount != -1) {
+      term.setForegroundColor(ANSI.GREEN)
+      term.putCharacter(c)
+      if (keySequence.length < charCount) {
+        val number: Int = generateNextKeyNumber
+        keySequence += number
+      }
+      setRelCurPos(-1, 1)
+      val (card, color) = pontifex.getCard(keySequence(charCount - 1) - 1)
+      setColor(color)
+      term.putCharacter(card)
+      setRelCurPos(-1, 1)
+      val encryptedC = pontifex.encryptSymbol(c, keySequence(charCount - 1))
+      term.setForegroundColor(ANSI.YELLOW)
+      term.putCharacter(encryptedC)
+      setRelCurPos(0, -2)
+      moveCaret()
     }
   }
 
@@ -366,7 +380,7 @@ object PontifexCodec extends App {
 
   private def printCursorPositionAndCharCount(): Unit = {
     val pos = curPos
-    val str = s"${toStr(pos.getColumn)} : ${toStr(pos.getRow)} ($charCount) : режим: ${mode.name}     "
+    val str = s"v2 ${toStr(pos.getColumn)} : ${toStr(pos.getRow)} ($charCount) : ${mode.name(lang)}     "
     setAbsCurPos(1, 1)
     term.setForegroundColor(ANSI.GREEN)
     str.foreach(c => term.putCharacter(c))
@@ -377,7 +391,25 @@ object PontifexCodec extends App {
     val pos = curPos
     setAbsCurPos(1, 2)
     term.setForegroundColor(ANSI.GREEN)
-    "Ключ: ".foreach(c => term.putCharacter(c))
+    keyWord.foreach(c => term.putCharacter(c))
+    setAbsCurPos(pos.getColumn, pos.getRow)
+  }
+
+  private def hideKey(): Unit = {
+    val pos = curPos
+    setAbsCurPos(1, 2)
+    term.setForegroundColor(ANSI.GREEN)
+    keyWord.foreach(c => term.putCharacter(c))
+    key.foreach(_ => term.putCharacter(' '))
+    setAbsCurPos(pos.getColumn, pos.getRow)
+  }
+
+  private def showKey(): Unit = {
+    val pos = curPos
+    setAbsCurPos(1, 2)
+    term.setForegroundColor(ANSI.GREEN)
+    keyWord.foreach(c => term.putCharacter(c))
+    key.foreach(c => term.putCharacter(c))
     setAbsCurPos(pos.getColumn, pos.getRow)
   }
 
@@ -385,7 +417,7 @@ object PontifexCodec extends App {
     val pos = curPos
     setAbsCurPos(1, 3)
     term.setForegroundColor(ANSI.GREEN)
-    "Колода: ".foreach(c => term.putCharacter(c))
+    deckWord.foreach(c => term.putCharacter(c))
     deck.foreach(printCard)
     setAbsCurPos(pos.getColumn, pos.getRow)
   }

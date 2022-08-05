@@ -210,6 +210,14 @@ class Pontifex(val alphabet1: String, val alphabet2: String, cards: Array[(Char,
     alphabet2((s - 1) % alphabet2.length)
   }
 
+  def getRandomEncryptedSymbol: Char = {
+    alphabet2((math.random() * alphabet2.length).toInt)
+  }
+
+  def getRandomOpenSymbol: Char = {
+    alphabet1((math.random() * alphabet1.length).toInt)
+  }
+
   def encrypt(message: String, deck: List[Int]): String = {
     val prepared = message.toUpperCase.map(replace).filter(c => alphabet1Set.contains(c)).trim
     val sequence = keySequence(prepared.length, deck)
