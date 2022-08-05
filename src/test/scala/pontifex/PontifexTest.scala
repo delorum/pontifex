@@ -1,0 +1,113 @@
+package pontifex
+
+import org.junit.runner.RunWith
+import org.scalatest.funsuite.AnyFunSuite
+import org.scalatestplus.junit.JUnitRunner
+
+/**
+ * https://www.schneier.com/wp-content/uploads/2015/12/sol-test.txt
+ */
+@RunWith(classOf[JUnitRunner])
+class PontifexTest extends AnyFunSuite {
+  test("straight deck, AAAAAAAAAAAAAAA") {
+    val p = new Pontifex("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+    val deck = p.straightDeck
+    val message = "AAAAAAAAAAAAAAA"
+    assert(p.keySequence(message.length, deck) == toListInt("4 49 10 24 8 51 44 6 4 33 20 39 19 34 42"))
+    assert(p.encrypt(message, deck) == withoutSpaces("EXKYI ZSGEH UNTIQ"))
+  }
+
+  test("deck(f), AAAAAAAAAAAAAAA") {
+    val p = new Pontifex("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+    val deck = p.deck("f")
+    val message = "AAAAAAAAAAAAAAA"
+    assert(p.keySequence(message.length, deck) == toListInt("49 24 8 46 16 1 12 33 10 10 9 27 4 32 24"))
+    assert(p.encrypt(message, deck) == withoutSpaces("XYIUQ BMHKK JBEGY"))
+  }
+
+  test("deck(fo), AAAAAAAAAAAAAAA") {
+    val p = new Pontifex("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+    val deck = p.deck("fo")
+    val message = "AAAAAAAAAAAAAAA"
+    assert(p.keySequence(message.length, deck) == toListInt("19 46 9 24 12 1 4 43 11 32 23 39 29 34 22"))
+    assert(p.encrypt(message, deck) == withoutSpaces("TUJYM BERLG XNDIW"))
+  }
+
+  test("deck(foo), AAAAAAAAAAAAAAA") {
+    val p = new Pontifex("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+    val deck = p.deck("foo")
+    val message = "AAAAAAAAAAAAAAA"
+    assert(p.keySequence(message.length, deck) == toListInt("8 19 7 25 20 9 8 22 32 43 5 26 17 38 48"))
+    assert(p.encrypt(message, deck) == withoutSpaces("ITHZU JIWGR FARMW"))
+  }
+
+  test("deck(a), AAAAAAAAAAAAAAA") {
+    val p = new Pontifex("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+    val deck = p.deck("a")
+    val message = "AAAAAAAAAAAAAAA"
+    assert(p.keySequence(message.length, deck) == toListInt("49 14 3 26 11 32 18 2 46 37 34 42 13 18 28"))
+    assert(p.encrypt(message, deck) == withoutSpaces("XODAL GSCUL IQNSC"))
+  }
+
+  test("deck(aa), AAAAAAAAAAAAAAA") {
+    val p = new Pontifex("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+    val deck = p.deck("aa")
+    val message = "AAAAAAAAAAAAAAA"
+    assert(p.keySequence(message.length, deck) == toListInt("14 7 32 22 38 23 23 2 26 8 12 2 34 16 15"))
+    assert(p.encrypt(message, deck) == withoutSpaces("OHGWM XXCAI MCIQP"))
+  }
+
+  test("deck(aaa), AAAAAAAAAAAAAAA") {
+    val p = new Pontifex("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+    val deck = p.deck("aaa")
+    val message = "AAAAAAAAAAAAAAA"
+    assert(p.keySequence(message.length, deck) == toListInt("3 28 18 42 24 33 1 16 51 39 6 29 43 46 45"))
+    assert(p.encrypt(message, deck) == withoutSpaces("DCSQY HBQZN GDRUT"))
+  }
+
+  test("deck(b), AAAAAAAAAAAAAAA") {
+    val p = new Pontifex("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+    val deck = p.deck("b")
+    val message = "AAAAAAAAAAAAAAA"
+    assert(p.keySequence(message.length, deck) == toListInt("49 16 4 30 12 40 8 19 37 25 47 29 18 16 18"))
+    assert(p.encrypt(message, deck) == withoutSpaces("XQEEM OITLZ VDSQS"))
+  }
+
+  test("deck(bc), AAAAAAAAAAAAAAA") {
+    val p = new Pontifex("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+    val deck = p.deck("bc")
+    val message = "AAAAAAAAAAAAAAA"
+    assert(p.keySequence(message.length, deck) == toListInt("16 13 32 17 10 42 34 7 2 37 6 48 44 28 4"))
+    assert(p.encrypt(message, deck) == withoutSpaces("QNGRK QIHCL GWSCE"))
+  }
+
+  test("deck(bcd), AAAAAAAAAAAAAAA") {
+    val p = new Pontifex("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+    val deck = p.deck("bcd")
+    val message = "AAAAAAAAAAAAAAA"
+    assert(p.keySequence(message.length, deck) == toListInt("5 38 20 27 50 1 38 26 49 33 39 42 49 2 35"))
+    assert(p.encrypt(message, deck) == withoutSpaces("FMUBY BMAXH NQXCJ"))
+  }
+
+  test("deck(cryptonomicon), AAAAAAAAAAAAAAAAAAAAAAAAA") {
+    val p = new Pontifex("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+    val deck = p.deck("cryptonomicon")
+    val message = "AAAAAAAAAAAAAAAAAAAAAAAAA"
+    assert(p.encrypt(message, deck) == withoutSpaces("SUGSR SXSWQ RMXOH IPBFP XARYQ"))
+  }
+
+  test("deck(cryptonomicon), SOLITAIREX") {
+    val p = new Pontifex("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+    val deck = p.deck("cryptonomicon")
+    val message = "SOLITAIREX"
+    assert(p.encrypt(message, deck) == withoutSpaces("KIRAK SFJAN"))
+  }
+
+  private def withoutSpaces(s: String): String = {
+    s.replace(" ", "")
+  }
+
+  private def toListInt(s: String): List[Int] = {
+    s.split(" ").toList.map(_.toInt)
+  }
+}
