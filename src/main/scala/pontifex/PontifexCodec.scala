@@ -122,7 +122,12 @@ object PontifexCodec extends App {
   printCursorPositionAndCharCount()
   printKey()
   printDeck()
-  setAbsCurPos(7, 2)
+  setKeyModePosition()
+
+  private def setKeyModePosition(): Unit = {
+    if (lang == "ru") setAbsCurPos(7, 2) else setAbsCurPos(6, 2)
+  }
+
   term.flush()
 
   while (true) {
