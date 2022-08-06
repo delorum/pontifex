@@ -35,7 +35,7 @@ class Pontifex(val alphabet1: String, val alphabet2: String, cards: Array[(Char,
   require(cards.map(_._2).forall(c => "RGBCY".contains(c)), "supported card colors: RGBCY")
 
   def getCard(c: Int): (Char, Char) = {
-    cards(c)
+    cards(c - 1)
   }
 
   def containsOpen(c: Char): Boolean = {
@@ -206,10 +206,6 @@ class Pontifex(val alphabet1: String, val alphabet2: String, cards: Array[(Char,
     else None
   }
 
-  def getKeySymbol(s: Int): Char = {
-    alphabet2((s - 1) % alphabet2.length)
-  }
-
   def getRandomEncryptedSymbol: Char = {
     alphabet2((math.random() * alphabet2.length).toInt)
   }
@@ -224,8 +220,7 @@ class Pontifex(val alphabet1: String, val alphabet2: String, cards: Array[(Char,
     (for {
       (d, s) <- prepared.zip(sequence)
     } yield {
-      val l: Char = encryptSymbol(d, s)
-      l
+      encryptSymbol(d, s)
     }).mkString
   }
 
@@ -233,16 +228,17 @@ class Pontifex(val alphabet1: String, val alphabet2: String, cards: Array[(Char,
     encrypt(message, deck(key))
   }
 
-  def decrypt(cipherText: String, key: String): String = {
-    val prepared = cipherText
-      .toUpperCase()
-      .filter(c => alphabet2Set.contains(c))
-    val cipherNumbers = prepared.map(letter2number2(_))
-    val sequence = keySequence(cipherNumbers.length, deck(key))
+  def decrypt(cipherText: String, deck: List[Int]): String = {
+    val prepared = cipherText.toUpperCase().filter(c => alphabet2Set.contains(c))
+    val sequence = keySequence(prepared.length, deck)
     (for {
-      (d, s) <- cipherNumbers.zip(sequence)
-      r = mod(d - s, AlphabetLen)
-      l = number2letter1(r)
-    } yield l).mkString
+      (d, s) <- prepared.zip(sequence)
+    } yield {
+      decryptSymbol(d, s)
+    }).mkString
+  }
+
+  def decrypt(cipherText: String, key: String): String = {
+    decrypt(cipherText, deck(key))
   }
 }

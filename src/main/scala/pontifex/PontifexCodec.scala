@@ -49,12 +49,15 @@ object PontifexCodec extends App {
 
   private val key = ArrayBuffer[Char]()
   private val keySequence = ArrayBuffer[Int]()
+  private val openMessage = ArrayBuffer[Char]()
+  private val encryptedMessage = ArrayBuffer[Char]()
 
   private val defaultTerminalFactory = new DefaultTerminalFactory()
 
   private var mode: PontifexCodecMode = PontifexCodecMode.Key
   private var charCount = 1
   private var keyIsHidden = false
+  private var messageIsHidden = false
 
   private val firstRowMap = Map(
     1 -> 1,
@@ -146,7 +149,20 @@ object PontifexCodec extends App {
           printCursorPositionAndCharCount()
         case 'k' =>
           keyIsHidden = !keyIsHidden
-          if (keyIsHidden) hideKey() else showKey()
+          if (keyIsHidden) {
+            hideKey()
+            hideDeck()
+          } else {
+            showKey()
+            printDeck()
+          }
+        case 's' =>
+          messageIsHidden = !messageIsHidden
+          if (messageIsHidden) {
+            if (mode == Encoding) hideOpenMessage() else hideEncryptedMessage()
+          } else {
+            if (mode == Encoding) showOpenMessage() else showEncryptedMessage()
+          }
         case '1' =>
           deck = pontifex.step1(deck)
           printDeck()
@@ -186,8 +202,12 @@ object PontifexCodec extends App {
       case Key =>
         setAbsCurPos(1, 5)
         Encoding
-      case Encoding => Decoding
-      case Decoding => Encoding
+      case Encoding =>
+        setRelCurPos(0, 2)
+        Decoding
+      case Decoding =>
+        setRelCurPos(0, -2)
+        Encoding
     }
   }
 
@@ -237,20 +257,16 @@ object PontifexCodec extends App {
 
   private def decode(c: Char): Unit = {
     if (pontifex.containsEncrypted(c) && charCount != -1) {
-      term.setForegroundColor(ANSI.YELLOW)
-      term.putCharacter(c)
+      putEncryptedChar(c)
       if (keySequence.length < charCount) {
         val number: Int = generateNextKeyNumber
         keySequence += number
       }
       setRelCurPos(-1, -1)
-      val (card, color) = pontifex.getCard(keySequence(charCount - 1) - 1)
-      setColor(color)
-      term.putCharacter(card)
+      putKeyNumber()
       setRelCurPos(-1, -1)
       val decryptedC = pontifex.decryptSymbol(c, keySequence(charCount - 1))
-      term.setForegroundColor(ANSI.GREEN)
-      term.putCharacter(decryptedC)
+      putOpenChar(decryptedC)
       setRelCurPos(0, 2)
       moveCaret()
     }
@@ -282,23 +298,47 @@ object PontifexCodec extends App {
 
   private def encode(c: Char): Unit = {
     if (pontifex.containsOpen(c) && charCount != -1) {
-      term.setForegroundColor(ANSI.GREEN)
-      term.putCharacter(c)
+      putOpenChar(c)
       if (keySequence.length < charCount) {
         val number: Int = generateNextKeyNumber
         keySequence += number
       }
       setRelCurPos(-1, 1)
-      val (card, color) = pontifex.getCard(keySequence(charCount - 1) - 1)
-      setColor(color)
-      term.putCharacter(card)
+      putKeyNumber()
       setRelCurPos(-1, 1)
       val encryptedC = pontifex.encryptSymbol(c, keySequence(charCount - 1))
-      term.setForegroundColor(ANSI.YELLOW)
-      term.putCharacter(encryptedC)
+      putEncryptedChar(encryptedC)
       setRelCurPos(0, -2)
       moveCaret()
     }
+  }
+
+  private def putKeyNumber(): Unit = {
+    if (!messageIsHidden) {
+      val (card, color) = pontifex.getCard(keySequence(charCount - 1))
+      setColor(color)
+      term.putCharacter(card)
+    } else term.putCharacter(' ')
+  }
+
+  private def putOpenChar(c: Char): Unit = {
+    if (!messageIsHidden || mode == Decoding) {
+      term.setForegroundColor(ANSI.GREEN)
+      term.putCharacter(c)
+    } else {
+      term.putCharacter(' ')
+    }
+    if (charCount >= openMessage.length) openMessage += c else openMessage(charCount - 1) = c
+  }
+
+  private def putEncryptedChar(c: Char): Unit = {
+    if (!messageIsHidden || mode == Encoding) {
+      term.setForegroundColor(ANSI.YELLOW)
+      term.putCharacter(c)
+    } else {
+      term.putCharacter(' ')
+    }
+    if (charCount >= encryptedMessage.length) encryptedMessage += c else encryptedMessage(charCount - 1) = c
   }
 
   private def reverseShuffleDeck(c: Char): Unit = {
@@ -348,15 +388,15 @@ object PontifexCodec extends App {
     deck = pontifex.step1(deck)
     printDeck()
     term.flush()
-    Thread.sleep(100)
+    if (!keyIsHidden) Thread.sleep(100)
     deck = pontifex.step2(deck)
     printDeck()
     term.flush()
-    Thread.sleep(100)
+    if (!keyIsHidden) Thread.sleep(100)
     deck = pontifex.step3(deck)
     printDeck()
     term.flush()
-    Thread.sleep(100)
+    if (!keyIsHidden) Thread.sleep(100)
     deck = pontifex.step4(deck)
     printDeck()
     term.flush()
@@ -409,6 +449,84 @@ object PontifexCodec extends App {
     setAbsCurPos(pos.getColumn, pos.getRow)
   }
 
+  private def hideOpenMessage(): Unit = {
+    val pos = curPos
+    setAbsCurPos(1, 5)
+    setCharCount()
+    keySequence.foreach { _ =>
+      term.putCharacter(' ')
+      setRelCurPos(-1, 1)
+      term.putCharacter(' ')
+      setRelCurPos(0, -1)
+      moveCaret()
+      Thread.sleep(100)
+      term.flush()
+    }
+    setAbsCurPos(pos.getColumn, pos.getRow)
+    printCursorPositionAndCharCount()
+    term.flush()
+  }
+
+  private def hideEncryptedMessage(): Unit = {
+    val pos = curPos
+    setAbsCurPos(1, 7)
+    setCharCount()
+    keySequence.foreach { _ =>
+      term.putCharacter(' ')
+      setRelCurPos(-1, -1)
+      term.putCharacter(' ')
+      setRelCurPos(0, 1)
+      moveCaret()
+      Thread.sleep(100)
+      term.flush()
+    }
+    setAbsCurPos(pos.getColumn, pos.getRow)
+    printCursorPositionAndCharCount()
+    term.flush()
+  }
+
+  private def showOpenMessage(): Unit = {
+    val pos = curPos
+    setAbsCurPos(1, 5)
+    setCharCount()
+    keySequence.foreach { c =>
+      term.setForegroundColor(ANSI.GREEN)
+      term.putCharacter(openMessage(charCount - 1))
+      setRelCurPos(-1, 1)
+      val (card, color) = pontifex.getCard(c)
+      setColor(color)
+      term.putCharacter(card)
+      setRelCurPos(0, -1)
+      moveCaret()
+      Thread.sleep(100)
+      term.flush()
+    }
+    setAbsCurPos(pos.getColumn, pos.getRow)
+    printCursorPositionAndCharCount()
+    term.flush()
+  }
+
+  private def showEncryptedMessage(): Unit = {
+    val pos = curPos
+    setAbsCurPos(1, 7)
+    setCharCount()
+    keySequence.foreach { c =>
+      term.setForegroundColor(ANSI.YELLOW)
+      term.putCharacter(openMessage(charCount - 1))
+      setRelCurPos(-1, -1)
+      val (card, color) = pontifex.getCard(c)
+      setColor(color)
+      term.putCharacter(card)
+      setRelCurPos(0, 1)
+      moveCaret()
+      Thread.sleep(100)
+      term.flush()
+    }
+    setAbsCurPos(pos.getColumn, pos.getRow)
+    printCursorPositionAndCharCount()
+    term.flush()
+  }
+
   private def showKey(): Unit = {
     val pos = curPos
     setAbsCurPos(1, 2)
@@ -418,17 +536,28 @@ object PontifexCodec extends App {
     setAbsCurPos(pos.getColumn, pos.getRow)
   }
 
-  private def printDeck(): Unit = {
+  private def hideDeck(): Unit = {
     val pos = curPos
     setAbsCurPos(1, 3)
     term.setForegroundColor(ANSI.GREEN)
     deckWord.foreach(c => term.putCharacter(c))
-    deck.foreach(printCard)
+    deck.foreach(_ => term.putCharacter(' '))
     setAbsCurPos(pos.getColumn, pos.getRow)
   }
 
+  private def printDeck(): Unit = {
+    if (!keyIsHidden) {
+      val pos = curPos
+      setAbsCurPos(1, 3)
+      term.setForegroundColor(ANSI.GREEN)
+      deckWord.foreach(c => term.putCharacter(c))
+      deck.foreach(printCard)
+      setAbsCurPos(pos.getColumn, pos.getRow)
+    }
+  }
+
   private def printCard(c: Int): Unit = {
-    val (card, color) = pontifex.getCard(c - 1)
+    val (card, color) = pontifex.getCard(c)
     setColor(color)
     term.putCharacter(card)
   }
