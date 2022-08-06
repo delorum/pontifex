@@ -14,6 +14,7 @@ import scala.annotation.tailrec
 import scala.collection.mutable.ArrayBuffer
 
 object PontifexCodec extends App {
+  val version = "3"
 
   private val (pontifex, lang) = if (args.nonEmpty && args(0).contains("--config")) {
     if (args.length < 2) {
@@ -425,7 +426,7 @@ object PontifexCodec extends App {
 
   private def printCursorPositionAndCharCount(): Unit = {
     val pos = curPos
-    val str = s"v2 ${toStr(pos.getColumn)} : ${toStr(pos.getRow)} ($charCount) : ${mode.name(lang)}     "
+    val str = s"v$version ${toStr(pos.getColumn)} : ${toStr(pos.getRow)} ($charCount) : ${mode.name(lang)}     "
     setAbsCurPos(1, 1)
     term.setForegroundColor(ANSI.GREEN)
     str.foreach(c => term.putCharacter(c))
