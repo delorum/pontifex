@@ -20,20 +20,26 @@ class PontifexTest extends AnyFunSuite {
 
   test("deck(f), AAAAAAAAAAAAAAA") {
     val p = new Pontifex("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-    val deck = p.deck("f")
+    val key = "f"
+    val deck = p.deck(key)
     val message = "AAAAAAAAAAAAAAA"
     assert(p.keySequence(message.length, deck) == toListInt("49 24 8 46 16 1 12 33 10 10 9 27 4 32 24"))
     assert(p.encrypt(message, deck) == withoutSpaces("XYIUQ BMHKK JBEGY"))
+    assert(p.encrypt(message, key) == withoutSpaces("XYIUQ BMHKK JBEGY"))
     assert(p.decrypt(withoutSpaces("XYIUQ BMHKK JBEGY"), deck) == message)
+    assert(p.decrypt(withoutSpaces("XYIUQ BMHKK JBEGY"), key) == message)
   }
 
   test("deck(fo), AAAAAAAAAAAAAAA") {
     val p = new Pontifex("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-    val deck = p.deck("fo")
+    val key = "fo"
+    val deck = p.deck(key)
     val message = "AAAAAAAAAAAAAAA"
     assert(p.keySequence(message.length, deck) == toListInt("19 46 9 24 12 1 4 43 11 32 23 39 29 34 22"))
     assert(p.encrypt(message, deck) == withoutSpaces("TUJYM BERLG XNDIW"))
+    assert(p.encrypt(message, key) == withoutSpaces("TUJYM BERLG XNDIW"))
     assert(p.decrypt(withoutSpaces("TUJYM BERLG XNDIW"), deck) == message)
+    assert(p.decrypt(withoutSpaces("TUJYM BERLG XNDIW"), key) == message)
   }
 
   test("deck(foo), AAAAAAAAAAAAAAA") {
@@ -47,20 +53,26 @@ class PontifexTest extends AnyFunSuite {
 
   test("deck(a), AAAAAAAAAAAAAAA") {
     val p = new Pontifex("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-    val deck = p.deck("a")
+    val key = "a"
+    val deck = p.deck(key)
     val message = "AAAAAAAAAAAAAAA"
     assert(p.keySequence(message.length, deck) == toListInt("49 14 3 26 11 32 18 2 46 37 34 42 13 18 28"))
     assert(p.encrypt(message, deck) == withoutSpaces("XODAL GSCUL IQNSC"))
+    assert(p.encrypt(message, key) == withoutSpaces("XODAL GSCUL IQNSC"))
     assert(p.decrypt(withoutSpaces("XODAL GSCUL IQNSC"), deck) == message)
+    assert(p.decrypt(withoutSpaces("XODAL GSCUL IQNSC"), key) == message)
   }
 
   test("deck(aa), AAAAAAAAAAAAAAA") {
     val p = new Pontifex("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
-    val deck = p.deck("aa")
+    val key = "aa"
+    val deck = p.deck(key)
     val message = "AAAAAAAAAAAAAAA"
     assert(p.keySequence(message.length, deck) == toListInt("14 7 32 22 38 23 23 2 26 8 12 2 34 16 15"))
     assert(p.encrypt(message, deck) == withoutSpaces("OHGWM XXCAI MCIQP"))
+    assert(p.encrypt(message, key) == withoutSpaces("OHGWM XXCAI MCIQP"))
     assert(p.decrypt(withoutSpaces("OHGWM XXCAI MCIQP"), deck) == message)
+    assert(p.decrypt(withoutSpaces("OHGWM XXCAI MCIQP"), key) == message)
   }
 
   test("deck(aaa), AAAAAAAAAAAAAAA") {
@@ -113,6 +125,58 @@ class PontifexTest extends AnyFunSuite {
     val message = "SOLITAIREX"
     assert(p.encrypt(message, deck) == withoutSpaces("KIRAK SFJAN"))
     assert(p.decrypt(withoutSpaces("KIRAK SFJAN"), deck) == message)
+  }
+
+  test("containsOpen") {
+    val alphabet1 = "АБГДЕЖЗИКЛМНОПРСТУФХЦЧШЫЮЯ1256789.,"
+    val alphabet2 = "АВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЫЮЯ125679"
+    val p = new Pontifex(alphabet1, alphabet2)
+    alphabet1.foreach { c =>
+      assert(p.containsOpen(c))
+    }
+    assert(!p.containsOpen('W'))
+  }
+
+  test("containsEncrypted") {
+    val alphabet1 = "АБГДЕЖЗИКЛМНОПРСТУФХЦЧШЫЮЯ1256789.,"
+    val alphabet2 = "АВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЫЮЯ125679"
+    val p = new Pontifex(alphabet1, alphabet2)
+    alphabet2.foreach { c =>
+      assert(p.containsEncrypted(c))
+    }
+    assert(!p.containsEncrypted('W'))
+  }
+
+  test("randomDeck") {
+    val alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    val p = new Pontifex(alphabet)
+    val deck = p.randomDeck
+    val message = "TEST"
+    val encrypted = p.encrypt(message, deck)
+    val decrypted = p.decrypt(encrypted, deck)
+    assert(decrypted == message)
+  }
+
+  test("getRandomOpenSymbol") {
+    val alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    val p = new Pontifex(alphabet)
+    (1 to 100).foreach { _ =>
+      assert(alphabet.contains(p.getRandomOpenSymbol))
+    }
+  }
+
+  test("getRandomEncryptedSymbol") {
+    val alphabet1 = "АБГДЕЖЗИКЛМНОПРСТУФХЦЧШЫЮЯ1256789.,"
+    val alphabet2 = "АВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЫЮЯ125679"
+    val p = new Pontifex(alphabet1, alphabet2)
+    (1 to 100).foreach { _ =>
+      assert(alphabet2.contains(p.getRandomEncryptedSymbol))
+    }
+  }
+
+  test("getNumberForOpenSymbol: None") {
+    val p = new Pontifex("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+    assert(p.getNumberForOpenSymbol(1).isEmpty)
   }
 
   test("reverse") {

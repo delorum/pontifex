@@ -2,14 +2,15 @@ package pontifex
 
 import scala.annotation.tailrec
 
-class Pontifex(val alphabet1: String, val alphabet2: String, cards: Array[(Char, Char)]) {
+class Pontifex(val alphabet1: String, val alphabet2: String, cards: Array[(Char, Char)], replaces: Map[Char, Char]) {
   def this(alphabet1: String, alphabet2: String) =
     this(
       alphabet1,
       alphabet2,
       (alphabet2.map(c => (c, 'G')).toList :::
         alphabet2.map(c => (c, 'B')).toList :::
-        alphabet2.take(2).map(c => (c, 'R')).toList).toArray
+        alphabet2.take(2).map(c => (c, 'R')).toList).toArray,
+      Map.empty
     )
   def this(alphabet: String) = this(alphabet, alphabet)
 
@@ -172,20 +173,7 @@ class Pontifex(val alphabet1: String, val alphabet2: String, cards: Array[(Char,
   }
 
   private def replace(c: Char): Char = {
-    c.toUpper match {
-      case 'Ъ' => '6'
-      case 'Б' => '6'
-      case 'Ь' => '6'
-      case 'В' => '8'
-      case 'Ё' => 'Е'
-      case 'Й' => 'И'
-      case 'Э' => 'З'
-      case '3' => 'З'
-      case 'Щ' => 'Ш'
-      case '0' => 'О'
-      case '4' => 'Ч'
-      case x => x
-    }
+    replaces.getOrElse(c, c)
   }
 
   def encryptSymbol(d: Char, s: Int): Char = {

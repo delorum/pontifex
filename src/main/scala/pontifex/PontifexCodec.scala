@@ -35,12 +35,19 @@ object PontifexCodec extends App {
     val alphabet2 = config.getProperty("alphabet2", alphabet1)
     val cards = {
       val cardSymbols = config.getProperty("cards", alphabet2 + alphabet2 + alphabet2.take(2))
-      val cardColors = config.getProperty("cardColors", alphabet2.map(_ => 'G') + alphabet2.map(_ => 'B') + alphabet2.take(2).map(_ => 'R'))
+      val cardColors = config.getProperty(
+        "cardColors",
+        alphabet2.map(_ => 'G') + alphabet2.map(_ => 'B') + alphabet2.take(2).map(_ => 'R')
+      )
       cardSymbols.zip(cardColors).toArray
     }
     val lang = config.getProperty("lang", "en")
     require(lang == "ru" || lang == "en", "only ru and en lang are supported")
-    (new Pontifex(alphabet1, alphabet2, cards), lang)
+
+    val replaces = config.getProperty("replaces", "")
+    val replacesMap: Map[Char, Char] =
+      if (replaces.isEmpty) Map.empty else replaces.split(" ").map(kv => (kv.head, kv(1))).toMap
+    (new Pontifex(alphabet1, alphabet2, cards, replacesMap), lang)
   }
 
   val keyWord = if (lang == "ru") "Ключ: " else "Key: "
@@ -513,7 +520,7 @@ object PontifexCodec extends App {
     setCharCount()
     keySequence.foreach { c =>
       term.setForegroundColor(ANSI.YELLOW)
-      term.putCharacter(openMessage(charCount - 1))
+      term.putCharacter(encryptedMessage(charCount - 1))
       setRelCurPos(-1, -1)
       val (card, color) = pontifex.getCard(c)
       setColor(color)
