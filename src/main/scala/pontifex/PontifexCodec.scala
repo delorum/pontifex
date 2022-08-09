@@ -7,6 +7,7 @@ import com.googlecode.lanterna.terminal.{DefaultTerminalFactory, Terminal}
 import pontifex.PontifexCodecMode.{Decoding, Encoding, Key}
 
 import java.awt.Toolkit
+import java.awt.datatransfer.StringSelection
 import java.io.{FileInputStream, InputStreamReader}
 import java.nio.charset.Charset
 import java.util.Properties
@@ -14,7 +15,7 @@ import scala.annotation.tailrec
 import scala.collection.mutable.ArrayBuffer
 
 object PontifexCodec extends App {
-  val version = "3"
+  val version = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/version.txt")).getLines().next
 
   private val (pontifex, lang) = if (args.nonEmpty && args(0).contains("--config")) {
     if (args.length < 2) {
@@ -65,6 +66,7 @@ object PontifexCodec extends App {
   private var mode: PontifexCodecMode = PontifexCodecMode.Key
   private var charCount = 1
   private var keyIsHidden = false
+  private var deckIsHidden = false
   private var messageIsHidden = false
 
   private val firstRowMap = Map(
@@ -159,18 +161,31 @@ object PontifexCodec extends App {
           keyIsHidden = !keyIsHidden
           if (keyIsHidden) {
             hideKey()
-            hideDeck()
           } else {
             showKey()
+          }
+        case 'd' =>
+          deckIsHidden = !deckIsHidden
+          if (deckIsHidden) {
+            hideDeck()
+          } else {
             printDeck()
           }
-        case 's' =>
+        case 'w' =>
           messageIsHidden = !messageIsHidden
           if (messageIsHidden) {
             if (mode == Encoding) hideOpenMessage() else hideEncryptedMessage()
           } else {
             if (mode == Encoding) showOpenMessage() else showEncryptedMessage()
           }
+        case 's' =>
+          val myString = encryptedMessage
+            .grouped(35)
+            .map(row => row.grouped(5).map(part => part.mkString).mkString(" "))
+            .mkString("\n")
+          val stringSelection = new StringSelection(myString)
+          val clipboard = Toolkit.getDefaultToolkit.getSystemClipboard
+          clipboard.setContents(stringSelection, null)
         case '1' =>
           deck = pontifex.step1(deck)
           printDeck()
@@ -233,7 +248,7 @@ object PontifexCodec extends App {
         if (pontifex.containsOpen(c)) {
           key += c
           term.setForegroundColor(ANSI.GREEN)
-          term.putCharacter(c)
+          if (!keyIsHidden) term.putCharacter(c) else term.putCharacter(' ')
           shuffleDeck(c)
         }
       case _ =>
@@ -353,15 +368,15 @@ object PontifexCodec extends App {
     pontifex.getNumberForOpenSymbol(c).foreach { amount =>
       deck = pontifex.reverseCountCut(amount, deck)
       term.flush()
-      Thread.sleep(100)
+      if (!deckIsHidden) Thread.sleep(100)
       deck = pontifex.reverseStep4(deck)
       printDeck()
       term.flush()
-      Thread.sleep(100)
+      if (!deckIsHidden) Thread.sleep(100)
       deck = pontifex.step3(deck)
       printDeck()
       term.flush()
-      Thread.sleep(100)
+      if (!deckIsHidden) Thread.sleep(100)
       deck = pontifex.reverseStep2(deck)
       printDeck()
       term.flush()
@@ -375,15 +390,15 @@ object PontifexCodec extends App {
       deck = pontifex.step1(deck)
       printDeck()
       term.flush()
-      Thread.sleep(100)
+      if (!deckIsHidden) Thread.sleep(100)
       deck = pontifex.step2(deck)
       printDeck()
       term.flush()
-      Thread.sleep(100)
+      if (!deckIsHidden) Thread.sleep(100)
       deck = pontifex.step3(deck)
       printDeck()
       term.flush()
-      Thread.sleep(100)
+      if (!deckIsHidden) Thread.sleep(100)
       deck = pontifex.step4(deck)
       printDeck()
       term.flush()
@@ -396,15 +411,15 @@ object PontifexCodec extends App {
     deck = pontifex.step1(deck)
     printDeck()
     term.flush()
-    if (!keyIsHidden) Thread.sleep(100)
+    if (!deckIsHidden) Thread.sleep(100)
     deck = pontifex.step2(deck)
     printDeck()
     term.flush()
-    if (!keyIsHidden) Thread.sleep(100)
+    if (!deckIsHidden) Thread.sleep(100)
     deck = pontifex.step3(deck)
     printDeck()
     term.flush()
-    if (!keyIsHidden) Thread.sleep(100)
+    if (!deckIsHidden) Thread.sleep(100)
     deck = pontifex.step4(deck)
     printDeck()
     term.flush()
@@ -554,7 +569,7 @@ object PontifexCodec extends App {
   }
 
   private def printDeck(): Unit = {
-    if (!keyIsHidden) {
+    if (!deckIsHidden) {
       val pos = curPos
       setAbsCurPos(1, 3)
       term.setForegroundColor(ANSI.GREEN)
