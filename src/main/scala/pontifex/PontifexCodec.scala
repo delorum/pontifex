@@ -279,7 +279,7 @@ object PontifexCodec extends App {
   }
 
   private def decode(c: Char): Unit = {
-    if (pontifex.containsEncrypted(c) && charCount != -1) {
+    if (pontifex.containsEncrypted(c) && charCount != -1 && (charCount - 1) <= encryptedMessage.length) {
       putEncryptedChar(c)
       if (keySequence.length < charCount) {
         val number: Int = generateNextKeyNumber
@@ -320,7 +320,7 @@ object PontifexCodec extends App {
   }
 
   private def encode(c: Char): Unit = {
-    if (pontifex.containsOpen(c) && charCount != -1) {
+    if (pontifex.containsOpen(c) && charCount != -1 && (charCount - 1) <= openMessage.length) {
       putOpenChar(c)
       if (keySequence.length < charCount) {
         val number: Int = generateNextKeyNumber
@@ -598,7 +598,11 @@ object PontifexCodec extends App {
 
   private def moveCaret(): Unit = {
     charCount += 1
-    if ((charCount - 1) % 35 == 0) {
+    if ((charCount - 1) % 350 == 0) {
+      val yPos = if (mode == Encoding) 5 else 7
+      if (curPos.getColumn > 44) setAbsCurPos(89, yPos)
+      else setAbsCurPos(45, yPos)
+    } else if ((charCount - 1) % 35 == 0) {
       if (curPos.getColumn > 88) setAbsCurPos(89, curPos.getRow + 4)
       else if (curPos.getColumn > 44) setAbsCurPos(45, curPos.getRow + 4)
       else setAbsCurPos(1, curPos.getRow + 4)
@@ -609,7 +613,7 @@ object PontifexCodec extends App {
 
   @tailrec
   private def getCharCount(x: Int, y: Int): Int = {
-    if (x > 44) getCharCount(x - 44, y - 2 + 44)
+    if (x > 44) getCharCount(x - 44, y + 45 - 5)
     else {
       if (mode == PontifexCodecMode.Encoding) {
         if ((y - 1) % 4 != 0) -1
