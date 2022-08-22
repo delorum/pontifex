@@ -351,7 +351,7 @@ object PontifexCodec extends App {
     } else {
       term.putCharacter(' ')
     }
-    if (charCount >= openMessage.length) openMessage += c else openMessage(charCount - 1) = c
+    if (charCount > openMessage.length) openMessage += c else openMessage(charCount - 1) = c
   }
 
   private def putEncryptedChar(c: Char): Unit = {
@@ -361,7 +361,7 @@ object PontifexCodec extends App {
     } else {
       term.putCharacter(' ')
     }
-    if (charCount >= encryptedMessage.length) encryptedMessage += c else encryptedMessage(charCount - 1) = c
+    if (charCount > encryptedMessage.length) encryptedMessage += c else encryptedMessage(charCount - 1) = c
   }
 
   private def reverseShuffleDeck(c: Char): Unit = {
@@ -453,6 +453,8 @@ object PontifexCodec extends App {
     term.setForegroundColor(ANSI.GREEN)
     str.foreach(c => term.putCharacter(c))
     setAbsCurPos(pos.getColumn, pos.getRow)
+    println(openMessage.mkString)
+    println(encryptedMessage.mkString)
   }
 
   private def printKey(): Unit = {
