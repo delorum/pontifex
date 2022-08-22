@@ -8,7 +8,7 @@ import pontifex.PontifexCodecMode.{Decoding, Encoding, Key}
 
 import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
-import java.io.{FileInputStream, InputStreamReader}
+import java.io.{FileInputStream, InputStream, InputStreamReader}
 import java.nio.charset.Charset
 import java.util.Properties
 import scala.annotation.tailrec
@@ -21,16 +21,14 @@ object PontifexCodec extends App {
     if (args.length < 2) {
       sys.error("provide path to config")
     }
-    loadFromConfig
+    loadFromConfigStream(new FileInputStream(args(1)))
   } else {
-    //new Pontifex("АБГДЕЖЗИКЛМНОПРСТУФХЦЧШЫЮЯ1256789.,", "АВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЫЮЯ125679")
-    (new Pontifex("ABCDEFGHIJKLMNOPQRSTUVWXYZ"), "en")
+    loadFromConfigStream(this.getClass.getResourceAsStream("/default.conf"))
   }
 
-  private def loadFromConfig: (Pontifex, String) = {
-    val file = args(1)
+  private def loadFromConfigStream(in: InputStream): (Pontifex, String) = {
     val config = new Properties()
-    config.load(new InputStreamReader(new FileInputStream(file), Charset.forName("UTF-8")))
+    config.load(new InputStreamReader(in, Charset.forName("UTF-8")))
     val alphabet1 = config.getProperty("alphabet1")
     require(alphabet1 != null, "alphabet required")
     val alphabet2 = config.getProperty("alphabet2", alphabet1)
