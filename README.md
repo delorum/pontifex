@@ -1,5 +1,6 @@
 # Pontifex
 Minimalistic Pontifex/Solitaire Cypher GUI
+![](https://raw.githubusercontent.com/delorum/pontifex/master/pontifex_v4.png)
 
 Bruce Schneier's Solitaire Cypher implementation. That one: https://www.schneier.com/academic/solitaire/ It was called Pontifex in the book Cryptonomicon by Neil Stevenson, I like more that name.
 
