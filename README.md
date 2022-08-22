@@ -54,7 +54,9 @@ java -jar target/pontifex-1-SNAPSHOT-jar-with-dependencies.jar
 ## Custom Config
 
 You can provide custom config for the program:
-```java -jar target/pontifex-1-SNAPSHOT-jar-with-dependencies.jar --config myconfig.conf```
+```
+java -jar target/pontifex-1-SNAPSHOT-jar-with-dependencies.jar --config myconfig.conf
+```
 
 Example of config file:
 ```
