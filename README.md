@@ -8,8 +8,10 @@ Very simple, fully open-source. All actual cypher implementation is [Here](https
 Fully covered with [Tests](https://github.com/delorum/pontifex/blob/master/src/test/scala/pontifex/PontifexTest.scala). Test Data was taken also from Bruce Schneier's [Site](https://www.schneier.com/wp-content/uploads/2015/12/sol-test.txt), so you can be sure, the implementation is correct.
 
 # How to build and run
+Java and Maven are needed.
 ```
 git clone git@github.com:delorum/pontifex.git
+cd pontifex
 mvn clean test assembly:single
 java -jar target/pontifex-1-SNAPSHOT-jar-with-dependencies.jar
 ```
