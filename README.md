@@ -21,7 +21,7 @@ java -jar target/pontifex-1-SNAPSHOT-jar-with-dependencies.jar
 
 ## Encryption
 
-- Select Keyword: any word of any length. Remember to use different keywords for each message! (for example, use constant prefix with current date)
+- Select Keyword: any word of any length. Remember to use different keywords for each message! (for example, use constant prefix plus current date)
 - You can press Backspace if you hit the wrong key. The deck will be reshuffling back.
 - You can see the deck below the keyword is shuffling with each letter you type.
 - Press `Ctrl-E`
