@@ -3,9 +3,9 @@ Minimalistic Pontifex/Solitaire Cypher GUI
 
 Bruce Schneier's Solitaire Cypher implementation. That one: https://www.schneier.com/academic/solitaire/ It was called Pontifex in the book Cryptonomicon by Neil Stevenson, I like more that name.
 
-Very simple, fully open-source. All [Here](https://github.com/delorum/pontifex/blob/master/src/main/scala/pontifex/Pontifex.scala)
+Very simple, fully open-source. All actual cypher implementation is [Here](https://github.com/delorum/pontifex/blob/master/src/main/scala/pontifex/Pontifex.scala)
 
-Fully covered with [Tests](https://github.com/delorum/pontifex/blob/master/src/test/scala/pontifex/PontifexTest.scala). Some Test Data is also from Bruce Schneier's [Site](https://www.schneier.com/wp-content/uploads/2015/12/sol-test.txt), so you can be sure, the implementation is correct.
+Fully covered with [Tests](https://github.com/delorum/pontifex/blob/master/src/test/scala/pontifex/PontifexTest.scala). Test Data was taken also from Bruce Schneier's [Site](https://www.schneier.com/wp-content/uploads/2015/12/sol-test.txt), so you can be sure, the implementation is correct.
 
 # How to build and run
 ```
