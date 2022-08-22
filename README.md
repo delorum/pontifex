@@ -7,14 +7,16 @@ Very simple, fully open-source. All [Here](https://github.com/delorum/pontifex/b
 
 Fully covered with [Tests](https://github.com/delorum/pontifex/blob/master/src/test/scala/pontifex/PontifexTest.scala). Some Test Data is also from Bruce Schneier's [Site](https://www.schneier.com/wp-content/uploads/2015/12/sol-test.txt), so you can be sure, the implementation is correct.
 
-==How to build and run==
-`git clone git@github.com:delorum/pontifex.git`
-`mvn clean test assembly:single`
-`java -jar target/pontifex-1-SNAPSHOT-jar-with-dependencies.jar`
+# How to build and run
+```
+git clone git@github.com:delorum/pontifex.git
+mvn clean test assembly:single
+java -jar target/pontifex-1-SNAPSHOT-jar-with-dependencies.jar
+```
 
-==Usage==
+# Usage
 
-===Encryption===
+## Encryption
 
 Select Keyword: any word of any length. Remember to use different keywords for each message! (for example, use constant prefix with current date)
 You can press Backspace if you hit the wrong key. The deck will be reshuffling back.
@@ -26,7 +28,7 @@ You can use Arrow keys to navigate the cursor over your text to make corrections
 Press `Ctrl-S` to copy encrypted message to clipboard.
 Press `Ctrl-Q` to close the program.
 
-===Decryption===
+## Decryption
 
 Select Keyword which was used to encrypt message
 Press `Ctrl-E` twice: "Decoding mode" message will appear.
@@ -35,7 +37,7 @@ Type letters of cyphertext. Open text will appear above.
 Like in Encryption Mode you can use Arrow keys to navigate the cursor over your cyphertext to make corrections.
 Press `Ctrl-Q` to close the program. No data will be saved to any files
 
-===Other Hotkeys===
+## Other Hotkeys
 
 `Ctrl-K`: show/hide the keyword
 `Ctrl-D`: show/hide the deck. Encryption and decryption would perform faster with deck being hidden.
@@ -46,7 +48,7 @@ With these three hotkeys it is possible to enter fully minimalistic mode: only c
 With `Ctrl-1` and `Ctrl-5` you can place Jokers in any positions you want before starting to enter keyword (for additional security).
 `Ctrl-6` - reverse for step4. This is much for debug purposes
 
-===Custom Config===
+## Custom Config
 
 You can provide custom config for the program:
 `java -jar target/pontifex-1-SNAPSHOT-jar-with-dependencies.jar --config myconfig.conf`
