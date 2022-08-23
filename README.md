@@ -14,7 +14,8 @@ Java, Maven and Git are needed.
 git clone git@github.com:delorum/pontifex.git
 cd pontifex
 mvn clean test assembly:single
-java -jar target/pontifex-1-SNAPSHOT-jar-with-dependencies.jar
+mv target/*.jar pontifex.jar
+java -jar pontifex.jar
 ```
 
 # Usage
