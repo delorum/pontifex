@@ -84,8 +84,8 @@ lang       = ru
 replaces   = "Ъ6 Б6 Ь6 В8 ЁЕ ЙИ ЭЗ 3З ЩШ 0О 4Ч"
 ```
 
-- `alphabet1` - (required) alphabet for open text. You can use any symbols you need
-- `alphabet2` - (required) alphabet for cypher text. Any other or the same symbols.
+- `alphabet1` - (required) alphabet for open text. This is an extension to the standard cipher. You can use any symbols and any alphabet length you need, not just latin alphabet.
+- `alphabet2` - (optional) alphabet for cipher text. You can use any other symbols to hide your original symbols set. Default: alphabet1.
 
 Alphabet1 and Alphabet2 lengthes must be equal
 
