@@ -36,7 +36,7 @@ object PontifexCodec extends App {
       val cardSymbols = config.getProperty("cards", alphabet2 + alphabet2 + alphabet2.take(2))
       val cardColors = config.getProperty(
         "cardColors",
-        alphabet2.map(_ => 'G') + alphabet2.map(_ => 'B') + alphabet2.take(2).map(_ => 'R')
+        alphabet2.map(_ => 'C') + alphabet2.map(_ => 'B') + alphabet2.take(2).map(_ => 'R')
       )
       cardSymbols.zip(cardColors).toArray
     }
