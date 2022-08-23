@@ -17,11 +17,11 @@ import scala.collection.mutable.ArrayBuffer
 object PontifexCodec extends App {
   val version = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/version.txt")).getLines().next
 
-  private val (pontifex, lang) = if (args.nonEmpty && args(0).contains("--config")) {
-    if (args.length < 2) {
-      sys.error("provide path to config")
+  private val (pontifex, lang) = if (args.contains("--config")) {
+    args.dropWhile(_ != "--config").slice(1, 2).headOption.filter(_.nonEmpty) match {
+      case Some(file) => loadFromConfigStream(new FileInputStream(file))
+      case None => sys.error("provide path to config")
     }
-    loadFromConfigStream(new FileInputStream(args(1)))
   } else {
     loadFromConfigStream(this.getClass.getResourceAsStream("/default.conf"))
   }
@@ -66,6 +66,8 @@ object PontifexCodec extends App {
   private var keyIsHidden = false
   private var deckIsHidden = false
   private var messageIsHidden = false
+
+  private val isDebug = args.contains("--debug")
 
   private val firstRowMap = Map(
     1 -> 1,
@@ -143,9 +145,11 @@ object PontifexCodec extends App {
 
   while (true) {
     val k = term.readInput()
-    println(
-      s"${k.getKeyType} : ${k.getCharacter} : isCtrlDown=${k.isCtrlDown} : isAltDown=${k.isAltDown} : isShiftDown=${k.isShiftDown}"
-    )
+    if (isDebug) {
+      println(
+        s"${k.getKeyType} : ${k.getCharacter} : isCtrlDown=${k.isCtrlDown} : isAltDown=${k.isAltDown} : isShiftDown=${k.isShiftDown}"
+      )
+    }
     if (k.isCtrlDown) {
       k.getCharacter.toChar match {
         case 'q' =>
@@ -451,8 +455,10 @@ object PontifexCodec extends App {
     term.setForegroundColor(ANSI.GREEN)
     str.foreach(c => term.putCharacter(c))
     setAbsCurPos(pos.getColumn, pos.getRow)
-    println(openMessage.mkString)
-    println(encryptedMessage.mkString)
+    if (isDebug) {
+      println(openMessage.mkString)
+      println(encryptedMessage.mkString)
+    }
   }
 
   private def printKey(): Unit = {
