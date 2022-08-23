@@ -14,7 +14,8 @@ Java, Maven and Git are needed.
 git clone git@github.com:delorum/pontifex.git
 cd pontifex
 mvn clean test assembly:single
-java -jar target/pontifex-1-SNAPSHOT-jar-with-dependencies.jar
+mv target/*.jar pontifex.jar
+java -jar pontifex.jar
 ```
 
 # Usage
@@ -26,8 +27,8 @@ java -jar target/pontifex-1-SNAPSHOT-jar-with-dependencies.jar
 - You can see the deck below the keyword is shuffling with each letter you type.
 - Press `Ctrl-E`
 - Type your message
-- You can see the deck is also shuffling with each typed letter, key sequence is generated under your message and encrypted message appear on the third line. So basically you press letters of open text and see the letters of cypher text. Like in Enigma. The encryption process is very informative.
-- You can use Arrow keys to navigate the cursor over your text to make corrections.
+- You can see the deck is also shuffling with each typed letter, key sequence is generated under your message and encrypted message appear on the third line. So basically you type letters of open text and see the letters of cypher text. Like in Enigma. The encryption process is very informative.
+- You can use `Arrow keys` to navigate the cursor over your text to make corrections (beat Enigma in that case).
 - Press `Ctrl-S` to copy encrypted message to clipboard.
 - Press `Ctrl-Q` to close the program.
 
