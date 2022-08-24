@@ -41,7 +41,7 @@ java -jar pontifex.jar
 
 ## Encryption
 
-- Select Keyword: any word of any length. Remember to use different keywords for each message! (for example, use constant prefix plus current date) Or it would be very easy to decrypt your messages.
+- Select Keyword: any word of any length. Typing of each letter will shuffle the deck in particular way. When you finish to enter your keyword the deck will be very well shuffled. Remember to use different keywords for each message! (for example, use constant prefix plus current date) or it would be very easy to decrypt your messages.
 - You can press `Backspace` if you hit the wrong key. The deck will reshuffle back.
 - You can see the deck below the keyword is shuffling with each letter you type.
 - Press `Ctrl-E`
