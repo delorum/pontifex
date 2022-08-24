@@ -82,7 +82,7 @@ You can provide custom config for the program:
 java -jar target/pontifex.jar --config myconfig.conf
 ```
 
-Example of config file:
+Example of config file (this is config1.conf in the repo - one Russian variant):
 ```
 alphabet1  = АБГДЕЖЗИКЛМНОПРСТУФХЦЧШЫЮЯ1256789.,
 alphabet2  = АВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЫЮЯ125679
