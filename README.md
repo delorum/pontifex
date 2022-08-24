@@ -103,4 +103,4 @@ Alphabet1 and Alphabet2 lengthes must be equal
 
 Thats all. Have fun! I hope this program will be helpful.
 
-And QXIRP DXUVJ YOXEY OCQME
+And EUELY WCGNS VNBKP BWZTJ
