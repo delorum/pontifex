@@ -41,11 +41,12 @@ java -jar pontifex.jar
 
 ## Encryption
 
-- Select Keyword: any word of any length. Typing of each letter will shuffle the deck in particular way. When you finish to enter your keyword the deck will be very well shuffled. Remember to use different keywords for each message! (for example, use constant prefix plus current date) or it would be very easy to decrypt your messages.
+- Select Keyword: any word of any length. Remember to use different keywords for each message! (for example, use constant prefix plus current date) or it would be very easy to decrypt your messages.
 - You can press `Backspace` if you hit the wrong key. The deck will reshuffle back.
-- You can see the deck below the keyword is shuffling with each letter you type.
-- Press `Ctrl-E`
-- Type your message
+- You will see the deck below the keyword shuffling with each letter you type.
+- When you finish to enter your keyword the deck will be very well shuffled. This is the initial state of your keystream generator.
+- Press `Ctrl-E`. This will enter the program to Encoding Mode
+- Type your message you want to encrypt.
 - You can see the deck is also shuffling with each typed letter, key sequence is generated under your message and encrypted message appear on the third line. So basically you type letters of open text and see the letters of cipher text. Like in Enigma. The encryption process is very informative.
 - You can use `Arrow keys` to navigate the cursor over your text to make corrections (beat Enigma in that case).
 - Press `Ctrl-S` to copy encrypted message to clipboard.
