@@ -22,6 +22,8 @@ object PontifexCodec extends App {
       case Some(file) => loadFromConfigStream(new FileInputStream(file))
       case None => sys.error("provide path to config")
     }
+  } else if (args.contains("ru")) {
+    loadFromConfigStream(this.getClass.getResourceAsStream("/default2.conf"))
   } else {
     loadFromConfigStream(this.getClass.getResourceAsStream("/default.conf"))
   }
@@ -50,7 +52,7 @@ object PontifexCodec extends App {
   }
 
   val keyWord = if (lang == "ru") "Ключ: " else "Key: "
-  val deckWord = if (lang == "ru") "Колода: " else "Deck: "
+  val deckWord = if (lang == "ru") "Карты: " else "Deck: "
 
   private var deck = pontifex.deck("")
 
@@ -166,6 +168,7 @@ object PontifexCodec extends App {
           } else {
             showKey()
           }
+          printCursorPositionAndCharCount()
         case 'd' =>
           deckIsHidden = !deckIsHidden
           if (deckIsHidden) {
@@ -173,6 +176,7 @@ object PontifexCodec extends App {
           } else {
             printDeck()
           }
+          printCursorPositionAndCharCount()
         case 'w' =>
           messageIsHidden = !messageIsHidden
           if (messageIsHidden) {
@@ -180,6 +184,7 @@ object PontifexCodec extends App {
           } else {
             if (mode == Encoding) showOpenMessage() else showEncryptedMessage()
           }
+          printCursorPositionAndCharCount()
         case 's' =>
           val myString = encryptedMessage
             .grouped(35)
@@ -188,6 +193,7 @@ object PontifexCodec extends App {
           val stringSelection = new StringSelection(myString)
           val clipboard = Toolkit.getDefaultToolkit.getSystemClipboard
           clipboard.setContents(stringSelection, null)
+          printCursorPositionAndCharCount()
         case '1' =>
           deck = pontifex.step1(deck)
           printDeck()
@@ -450,7 +456,28 @@ object PontifexCodec extends App {
 
   private def printCursorPositionAndCharCount(): Unit = {
     val pos = curPos
-    val str = s"v$version ${toStr(pos.getColumn)} : ${toStr(pos.getRow)} ($charCount) : ${mode.name(lang)}     "
+    def saveHotkey = if (lang == "ru") "Ctrl-S:Сохр" else "Ctrl-S:Sav"
+    def exitHotkey = if (lang == "ru") "Ctrl-Q:Вых" else "Ctrl-Q:Quit"
+    def keyHotkey = if (lang == "ru") {
+      if (keyIsHidden) "Ctrl-K:ОткКл" else "Ctrl-K:СкрКл"
+    } else {
+      if (keyIsHidden) "Ctrl-K:ShwKey" else "Ctrl-K:HidKey"
+    }
+    def deckHotkey = if (lang == "ru") {
+      if (deckIsHidden) "Ctrl-D:ОткКар" else "Ctrl-D:СкрКар"
+    } else {
+      if (deckIsHidden) "Ctrl-D:ShwDec" else "Ctrl-D:HidDec"
+    }
+    def messageHotkey = if (lang == "ru") {
+      if (messageIsHidden) "Ctrl-W:ОткТек" else "Ctrl-W:СкрТек"
+    } else {
+      if (messageIsHidden) "Ctrl-W:ShwTex" else "Ctrl-W:HidTex"
+    }
+    def enterHotkey = if (lang == "ru") "Enter:Слч" else "Enter:Rnd"
+    val hotkeys =
+      s"${mode.hotkey(lang)} | $saveHotkey | $exitHotkey | $keyHotkey | $deckHotkey | $messageHotkey | $enterHotkey"
+    val str =
+      s"v$version | ${toStr(pos.getColumn)} : ${toStr(pos.getRow)} ($charCount) | ${mode.name(lang)} | $hotkeys     "
     setAbsCurPos(1, 1)
     term.setForegroundColor(ANSI.GREEN)
     str.foreach(c => term.putCharacter(c))
