@@ -3,6 +3,7 @@ package pontifex
 import scala.annotation.tailrec
 
 class Pontifex(val alphabet1: String, val alphabet2: String, cards: Array[(Char, Char)], replaces: Map[Char, Char]) {
+
   def this(alphabet1: String, alphabet2: String) =
     this(
       alphabet1,
@@ -126,7 +127,7 @@ class Pontifex(val alphabet1: String, val alphabet2: String, cards: Array[(Char,
   def keySequence(num: Int, deck: List[Int]): List[Int] = {
     @tailrec
     def _keySequence(curDeck: List[Int], result: List[Int]): List[Int] = {
-      //println(result.length + " : " + curDeck.mkString(","))
+      // println(result.length + " : " + curDeck.mkString(","))
       if (result.length == num) result.reverse
       else {
         val (nextSymbol, newDeck) = step5(step4(step3(step2(step1(curDeck)))))
@@ -149,7 +150,7 @@ class Pontifex(val alphabet1: String, val alphabet2: String, cards: Array[(Char,
     } yield randomCard).toList
   }
 
-  def deck(key: String): List[Int] = {
+  def deck(key: String, initialDeck: List[Int] = straightDeck): List[Int] = {
     val prepared = key.toUpperCase.map(replace).filter(c => alphabet1Set.contains(c)).trim
     @tailrec
     def _deck(curDeck: List[Int], keyPart: List[Char]): List[Int] = {
@@ -161,7 +162,7 @@ class Pontifex(val alphabet1: String, val alphabet2: String, cards: Array[(Char,
         case Nil => curDeck
       }
     }
-    if (prepared.isEmpty) straightDeck
+    if (prepared.isEmpty) initialDeck
     else _deck(straightDeck, prepared.toList)
   }
 

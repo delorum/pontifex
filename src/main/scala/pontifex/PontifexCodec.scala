@@ -7,7 +7,7 @@ import com.googlecode.lanterna.terminal.{DefaultTerminalFactory, Terminal}
 import pontifex.PontifexCodecMode.{Decoding, Encoding, Key}
 
 import java.awt.Toolkit
-import java.awt.datatransfer.StringSelection
+import java.awt.datatransfer.{DataFlavor, StringSelection}
 import java.io.{FileInputStream, InputStream, InputStreamReader}
 import java.nio.charset.Charset
 import java.util.Properties
@@ -36,7 +36,7 @@ object PontifexCodec extends App {
     loadFromConfigStream(this.getClass.getResourceAsStream("/default.conf"))
   }
 
-  private def loadFromConfigStream(in: InputStream): (Pontifex, String) = {
+  def loadFromConfigStream(in: InputStream): (Pontifex, String) = {
     val config = new Properties()
     config.load(new InputStreamReader(in, Charset.forName("UTF-8")))
     val alphabet1 = config.getProperty("alphabet1")
@@ -197,6 +197,8 @@ object PontifexCodec extends App {
             if (mode == Encoding) showOpenMessage() else showEncryptedMessage()
           }
           printCursorPositionAndCharCount()
+        case 'v' =>
+          if (mode == Encoding) enterOpenMessage() else enterEncryptedMessage()
         case 's' =>
           val myString = encryptedMessage
             .grouped(35)
@@ -472,6 +474,7 @@ object PontifexCodec extends App {
       isMessageChanging: Boolean = false): Unit = {
     val pos = curPos
     def saveHotkey = if (lang == "ru") "Ctrl-S:Сохр" else "Ctrl-S:Sav"
+    def pasteHotkey = if (lang == "ru") "Ctrl-V:Вст" else "Ctrl-V:Ins"
     def exitHotkey = if (lang == "ru") "Ctrl-Q:Вых" else "Ctrl-Q:Quit"
     def keyHotkey =
       if (lang == "ru") {
@@ -494,7 +497,7 @@ object PontifexCodec extends App {
     def redify(str: String): String = if (isMessageChanging) s"[R$str]" else str
     def enterHotkey = if (lang == "ru") "Enter:Слч" else "Enter:Rnd"
     val hotkeys =
-      s"${mode.hotkey(lang)} | $saveHotkey | $exitHotkey | $keyHotkey | $deckHotkey | $messageHotkey | $enterHotkey"
+      s"${mode.hotkey(lang)} | $saveHotkey | $pasteHotkey | $exitHotkey | $keyHotkey | $deckHotkey | $messageHotkey | $enterHotkey"
     val str =
       s"v$version | ${toStr(pos.getColumn)} : ${toStr(pos.getRow)} ($charCount) | ${mode
           .name(lang)} | $hotkeys     "
@@ -598,6 +601,24 @@ object PontifexCodec extends App {
     }
     setAbsCurPos(pos.getColumn, pos.getRow)
     term.flush()
+  }
+
+  def enterOpenMessage(): Unit = {
+    val text = Toolkit.getDefaultToolkit.getSystemClipboard.getData(DataFlavor.stringFlavor).asInstanceOf[String]
+    text.foreach { c =>
+      encode(c.toUpper)
+      Thread.sleep(100)
+      term.flush()
+    }
+  }
+
+  def enterEncryptedMessage(): Unit = {
+    val text = Toolkit.getDefaultToolkit.getSystemClipboard.getData(DataFlavor.stringFlavor).asInstanceOf[String]
+    text.foreach { c =>
+      decode(c.toUpper)
+      Thread.sleep(100)
+      term.flush()
+    }
   }
 
   private def showKey(): Unit = {
