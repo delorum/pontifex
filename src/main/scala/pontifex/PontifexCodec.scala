@@ -15,10 +15,18 @@ import scala.annotation.tailrec
 import scala.collection.mutable.ArrayBuffer
 
 object PontifexCodec extends App {
-  val version = scala.io.Source.fromInputStream(this.getClass.getResourceAsStream("/version.txt")).getLines().next
+
+  val version = scala.io.Source
+    .fromInputStream(this.getClass.getResourceAsStream("/version.txt"))
+    .getLines()
+    .next
 
   private val (pontifex, lang) = if (args.contains("--config")) {
-    args.dropWhile(_ != "--config").slice(1, 2).headOption.filter(_.nonEmpty) match {
+    args
+      .dropWhile(_ != "--config")
+      .slice(1, 2)
+      .headOption
+      .filter(_.nonEmpty) match {
       case Some(file) => loadFromConfigStream(new FileInputStream(file))
       case None => sys.error("provide path to config")
     }
@@ -35,10 +43,12 @@ object PontifexCodec extends App {
     require(alphabet1 != null, "alphabet required")
     val alphabet2 = config.getProperty("alphabet2", alphabet1)
     val cards = {
-      val cardSymbols = config.getProperty("cards", alphabet2 + alphabet2 + alphabet2.take(2))
+      val cardSymbols =
+        config.getProperty("cards", alphabet2 + alphabet2 + alphabet2.take(2))
       val cardColors = config.getProperty(
         "cardColors",
-        alphabet2.map(_ => 'C') + alphabet2.map(_ => 'B') + alphabet2.take(2).map(_ => 'R')
+        alphabet2.map(_ => 'C') + alphabet2
+          .map(_ => 'B') + alphabet2.take(2).map(_ => 'R')
       )
       cardSymbols.zip(cardColors).toArray
     }
@@ -47,7 +57,8 @@ object PontifexCodec extends App {
 
     val replaces = config.getProperty("replaces", "")
     val replacesMap: Map[Char, Char] =
-      if (replaces.isEmpty) Map.empty else replaces.split(" ").map(kv => (kv.head, kv(1))).toMap
+      if (replaces.isEmpty) Map.empty
+      else replaces.split(" ").map(kv => (kv.head, kv(1))).toMap
     (new Pontifex(alphabet1, alphabet2, cards, replacesMap), lang)
   }
 
@@ -133,7 +144,7 @@ object PontifexCodec extends App {
   }
   term.flush()
   Thread.sleep(500)
-  term.setForegroundColor(ANSI.GREEN)
+  setColor('G')
   printCursorPositionAndCharCount()
   printKey()
   printDeck()
@@ -178,6 +189,7 @@ object PontifexCodec extends App {
           }
           printCursorPositionAndCharCount()
         case 'w' =>
+          printCursorPositionAndCharCount(isMessageChanging = true)
           messageIsHidden = !messageIsHidden
           if (messageIsHidden) {
             if (mode == Encoding) hideOpenMessage() else hideEncryptedMessage()
@@ -255,7 +267,7 @@ object PontifexCodec extends App {
         val c = k.getCharacter.toChar.toUpper
         if (pontifex.containsOpen(c)) {
           key += c
-          term.setForegroundColor(ANSI.GREEN)
+          setColor('G')
           if (!keyIsHidden) term.putCharacter(c) else term.putCharacter(' ')
           shuffleDeck(c)
         }
@@ -354,22 +366,24 @@ object PontifexCodec extends App {
 
   private def putOpenChar(c: Char): Unit = {
     if (!messageIsHidden || mode == Decoding) {
-      term.setForegroundColor(ANSI.GREEN)
+      setColor('G')
       term.putCharacter(c)
     } else {
       term.putCharacter(' ')
     }
-    if (charCount > openMessage.length) openMessage += c else openMessage(charCount - 1) = c
+    if (charCount > openMessage.length) openMessage += c
+    else openMessage(charCount - 1) = c
   }
 
   private def putEncryptedChar(c: Char): Unit = {
     if (!messageIsHidden || mode == Encoding) {
-      term.setForegroundColor(ANSI.YELLOW)
+      setColor('Y')
       term.putCharacter(c)
     } else {
       term.putCharacter(' ')
     }
-    if (charCount > encryptedMessage.length) encryptedMessage += c else encryptedMessage(charCount - 1) = c
+    if (charCount > encryptedMessage.length) encryptedMessage += c
+    else encryptedMessage(charCount - 1) = c
   }
 
   private def reverseShuffleDeck(c: Char): Unit = {
@@ -454,54 +468,61 @@ object PontifexCodec extends App {
     if (int >= 0 && int < 10) s"0$int" else int.toString
   }
 
-  private def printCursorPositionAndCharCount(): Unit = {
+  private def printCursorPositionAndCharCount(
+      isMessageChanging: Boolean = false): Unit = {
     val pos = curPos
     def saveHotkey = if (lang == "ru") "Ctrl-S:Сохр" else "Ctrl-S:Sav"
     def exitHotkey = if (lang == "ru") "Ctrl-Q:Вых" else "Ctrl-Q:Quit"
-    def keyHotkey = if (lang == "ru") {
-      if (keyIsHidden) "Ctrl-K:ОткКл" else "Ctrl-K:СкрКл"
-    } else {
-      if (keyIsHidden) "Ctrl-K:ShwKey" else "Ctrl-K:HidKey"
-    }
-    def deckHotkey = if (lang == "ru") {
-      if (deckIsHidden) "Ctrl-D:ОткКар" else "Ctrl-D:СкрКар"
-    } else {
-      if (deckIsHidden) "Ctrl-D:ShwDec" else "Ctrl-D:HidDec"
-    }
-    def messageHotkey = if (lang == "ru") {
-      if (messageIsHidden) "Ctrl-W:ОткТек" else "Ctrl-W:СкрТек"
-    } else {
-      if (messageIsHidden) "Ctrl-W:ShwTex" else "Ctrl-W:HidTex"
-    }
+    def keyHotkey =
+      if (lang == "ru") {
+        if (keyIsHidden) "Ctrl-K:ОткКл" else "Ctrl-K:СкрКл"
+      } else {
+        if (keyIsHidden) "Ctrl-K:ShwKey" else "Ctrl-K:HidKey"
+      }
+    def deckHotkey =
+      if (lang == "ru") {
+        if (deckIsHidden) "Ctrl-D:ОткКар" else "Ctrl-D:СкрКар"
+      } else {
+        if (deckIsHidden) "Ctrl-D:ShwDec" else "Ctrl-D:HidDec"
+      }
+    def messageHotkey =
+      redify(if (lang == "ru") {
+        if (messageIsHidden) "Ctrl-W:ОткТек" else "Ctrl-W:СкрТек"
+      } else {
+        if (messageIsHidden) "Ctrl-W:ShwTex" else "Ctrl-W:HidTex"
+      })
+    def redify(str: String): String = if (isMessageChanging) s"[R$str]" else str
     def enterHotkey = if (lang == "ru") "Enter:Слч" else "Enter:Rnd"
     val hotkeys =
       s"${mode.hotkey(lang)} | $saveHotkey | $exitHotkey | $keyHotkey | $deckHotkey | $messageHotkey | $enterHotkey"
     val str =
-      s"v$version | ${toStr(pos.getColumn)} : ${toStr(pos.getRow)} ($charCount) | ${mode.name(lang)} | $hotkeys     "
+      s"v$version | ${toStr(pos.getColumn)} : ${toStr(pos.getRow)} ($charCount) | ${mode
+          .name(lang)} | $hotkeys     "
     setAbsCurPos(1, 1)
-    term.setForegroundColor(ANSI.GREEN)
-    str.foreach(c => term.putCharacter(c))
+    setColor('G')
+    printString(str)
     setAbsCurPos(pos.getColumn, pos.getRow)
     if (isDebug) {
       println(openMessage.mkString)
       println(encryptedMessage.mkString)
     }
+    term.flush()
   }
 
   private def printKey(): Unit = {
     val pos = curPos
     setAbsCurPos(1, 2)
-    term.setForegroundColor(ANSI.GREEN)
-    keyWord.foreach(c => term.putCharacter(c))
+    setColor('G')
+    printString(keyWord)
     setAbsCurPos(pos.getColumn, pos.getRow)
   }
 
   private def hideKey(): Unit = {
     val pos = curPos
     setAbsCurPos(1, 2)
-    term.setForegroundColor(ANSI.GREEN)
-    keyWord.foreach(c => term.putCharacter(c))
-    key.foreach(_ => term.putCharacter(' '))
+    setColor('G')
+    printString(keyWord)
+    printString(" " * key.length)
     setAbsCurPos(pos.getColumn, pos.getRow)
   }
 
@@ -519,7 +540,6 @@ object PontifexCodec extends App {
       term.flush()
     }
     setAbsCurPos(pos.getColumn, pos.getRow)
-    printCursorPositionAndCharCount()
     term.flush()
   }
 
@@ -537,7 +557,6 @@ object PontifexCodec extends App {
       term.flush()
     }
     setAbsCurPos(pos.getColumn, pos.getRow)
-    printCursorPositionAndCharCount()
     term.flush()
   }
 
@@ -546,7 +565,7 @@ object PontifexCodec extends App {
     setAbsCurPos(1, 5)
     setCharCount()
     keySequence.foreach { c =>
-      term.setForegroundColor(ANSI.GREEN)
+      setColor('G')
       term.putCharacter(openMessage(charCount - 1))
       setRelCurPos(-1, 1)
       val (card, color) = pontifex.getCard(c)
@@ -558,7 +577,6 @@ object PontifexCodec extends App {
       term.flush()
     }
     setAbsCurPos(pos.getColumn, pos.getRow)
-    printCursorPositionAndCharCount()
     term.flush()
   }
 
@@ -567,7 +585,7 @@ object PontifexCodec extends App {
     setAbsCurPos(1, 7)
     setCharCount()
     keySequence.foreach { c =>
-      term.setForegroundColor(ANSI.YELLOW)
+      setColor('Y')
       term.putCharacter(encryptedMessage(charCount - 1))
       setRelCurPos(-1, -1)
       val (card, color) = pontifex.getCard(c)
@@ -579,25 +597,24 @@ object PontifexCodec extends App {
       term.flush()
     }
     setAbsCurPos(pos.getColumn, pos.getRow)
-    printCursorPositionAndCharCount()
     term.flush()
   }
 
   private def showKey(): Unit = {
     val pos = curPos
     setAbsCurPos(1, 2)
-    term.setForegroundColor(ANSI.GREEN)
-    keyWord.foreach(c => term.putCharacter(c))
-    key.foreach(c => term.putCharacter(c))
+    setColor('G')
+    printString(keyWord)
+    printChars(key)
     setAbsCurPos(pos.getColumn, pos.getRow)
   }
 
   private def hideDeck(): Unit = {
     val pos = curPos
     setAbsCurPos(1, 3)
-    term.setForegroundColor(ANSI.GREEN)
-    deckWord.foreach(c => term.putCharacter(c))
-    deck.foreach(_ => term.putCharacter(' '))
+    setColor('G')
+    printString(deckWord)
+    printString(" " * deck.length)
     setAbsCurPos(pos.getColumn, pos.getRow)
   }
 
@@ -605,8 +622,8 @@ object PontifexCodec extends App {
     if (!deckIsHidden) {
       val pos = curPos
       setAbsCurPos(1, 3)
-      term.setForegroundColor(ANSI.GREEN)
-      deckWord.foreach(c => term.putCharacter(c))
+      setColor('G')
+      printString(deckWord)
       deck.foreach(printCard)
       setAbsCurPos(pos.getColumn, pos.getRow)
     }
@@ -618,6 +635,8 @@ object PontifexCodec extends App {
     term.putCharacter(card)
   }
 
+  private var currentColor: Char = 'G'
+
   private def setColor(color: Char): Unit = {
     color match {
       case 'R' => term.setForegroundColor(ANSI.RED)
@@ -625,7 +644,38 @@ object PontifexCodec extends App {
       case 'B' => term.setForegroundColor(ANSI.BLUE)
       case 'Y' => term.setForegroundColor(ANSI.YELLOW)
       case 'C' => term.setForegroundColor(ANSI.CYAN)
-      case _ =>
+      case _ => sys.error(s"unexpected color $color")
+    }
+    currentColor = color
+  }
+
+  private def printString(str: String): Unit = {
+    printChars(str.toCharArray)
+  }
+
+  private def printChars(str: Seq[Char]): Unit = {
+    val colorStack = ArrayBuffer[Char]()
+    val ColorNoMode = 0
+    val ColorSet = 1
+    var colorMode = 0
+    str.foreach {
+      case '[' =>
+        colorMode = ColorSet
+      case c @ ('R' | 'G' | 'B' | 'Y' | 'C') =>
+        if (colorMode == ColorSet) {
+          colorStack += currentColor
+          setColor(c)
+          colorMode = ColorNoMode
+        } else {
+          term.putCharacter(c)
+        }
+      case ']' =>
+        if (colorStack.nonEmpty) {
+          val prevColor = colorStack.remove(colorStack.length - 1)
+          setColor(prevColor)
+        }
+      case c =>
+        term.putCharacter(c)
     }
   }
 
