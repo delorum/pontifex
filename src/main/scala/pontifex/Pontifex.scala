@@ -163,7 +163,7 @@ class Pontifex(val alphabet1: String, val alphabet2: String, cards: Array[(Char,
       }
     }
     if (prepared.isEmpty) initialDeck
-    else _deck(straightDeck, prepared.toList)
+    else _deck(initialDeck, prepared.toList)
   }
 
   @tailrec
