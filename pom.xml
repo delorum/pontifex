@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>delorum</groupId>
   <artifactId>pontifex</artifactId>
-  <version>8</version>
+  <version>9</version>
   <inceptionYear>2020</inceptionYear>
   <properties>
     <scala.version>2.12.12</scala.version>

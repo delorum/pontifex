@@ -129,8 +129,11 @@ object PontifexCodec extends App {
   private val term: Terminal = {
     val terminal = defaultTerminalFactory.createAWTTerminal()
 
-    terminal.setSize(540 * 7, 500 * 4)
     val screenDimension = Toolkit.getDefaultToolkit.getScreenSize
+    if (screenDimension.width < 540 * 7 || screenDimension.height < 500 * 4) {
+      sys.error(s"minimum screen size ${540 * 7}x${500 * 4} required")
+    }
+    terminal.setSize(540 * 7, 500 * 4)
     terminal.setLocation(
       (screenDimension.width - terminal.getWidth) / 2,
       (screenDimension.height - terminal.getHeight) / 2
@@ -604,20 +607,24 @@ object PontifexCodec extends App {
   }
 
   def enterOpenMessage(): Unit = {
-    val text = Toolkit.getDefaultToolkit.getSystemClipboard.getData(DataFlavor.stringFlavor).asInstanceOf[String]
-    text.foreach { c =>
-      encode(c.toUpper)
-      Thread.sleep(100)
-      term.flush()
+    if (charCount != -1) {
+      val text = Toolkit.getDefaultToolkit.getSystemClipboard.getData(DataFlavor.stringFlavor).asInstanceOf[String]
+      text.foreach { c =>
+        encode(c.toUpper)
+        Thread.sleep(100)
+        term.flush()
+      }
     }
   }
 
   def enterEncryptedMessage(): Unit = {
-    val text = Toolkit.getDefaultToolkit.getSystemClipboard.getData(DataFlavor.stringFlavor).asInstanceOf[String]
-    text.foreach { c =>
-      decode(c.toUpper)
-      Thread.sleep(100)
-      term.flush()
+    if (charCount != -1) {
+      val text = Toolkit.getDefaultToolkit.getSystemClipboard.getData(DataFlavor.stringFlavor).asInstanceOf[String]
+      text.foreach { c =>
+        decode(c.toUpper)
+        Thread.sleep(100)
+        term.flush()
+      }
     }
   }
 
