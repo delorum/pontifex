@@ -1,9 +1,9 @@
 package pontifex
 
-import com.googlecode.lanterna.SGR
 import com.googlecode.lanterna.TextColor.ANSI
 import com.googlecode.lanterna.input.{KeyStroke, KeyType}
 import com.googlecode.lanterna.terminal.{DefaultTerminalFactory, Terminal}
+import com.googlecode.lanterna.{SGR, TerminalPosition, TerminalSize}
 import pontifex.PontifexCodecMode.{Decoding, Encoding, Key}
 
 import java.awt.Toolkit
@@ -30,7 +30,7 @@ object PontifexCodec extends App {
       case Some(file) => loadFromConfigStream(new FileInputStream(file))
       case None => sys.error("provide path to config")
     }
-  } else if (args.contains("ru")) {
+  } else if (args.contains("--ru")) {
     loadFromConfigStream(this.getClass.getResourceAsStream("/default2.conf"))
   } else {
     loadFromConfigStream(this.getClass.getResourceAsStream("/default.conf"))
@@ -65,14 +65,12 @@ object PontifexCodec extends App {
   val keyWord = if (lang == "ru") "Ключ: " else "Key: "
   val deckWord = if (lang == "ru") "Карты: " else "Deck: "
 
-  private var deck = pontifex.deck("")
+  private var deck = pontifex.straightDeck
 
   private val key = ArrayBuffer[Char]()
   private val keySequence = ArrayBuffer[Int]()
   private val openMessage = ArrayBuffer[Char]()
   private val encryptedMessage = ArrayBuffer[Char]()
-
-  private val defaultTerminalFactory = new DefaultTerminalFactory()
 
   private var mode: PontifexCodecMode = PontifexCodecMode.Key
   private var charCount = 1
@@ -127,20 +125,18 @@ object PontifexCodec extends App {
   )
 
   private val term: Terminal = {
+    val defaultTerminalFactory = new DefaultTerminalFactory()
+    defaultTerminalFactory.setInitialTerminalSize(new TerminalSize(153, 44))
     val terminal = defaultTerminalFactory.createAWTTerminal()
 
     val screenDimension = Toolkit.getDefaultToolkit.getScreenSize
-    if (screenDimension.width < 540 * 7 || screenDimension.height < 500 * 4) {
-      sys.error(s"minimum screen size ${540 * 7}x${500 * 4} required")
-    }
-    terminal.setSize(540 * 7, 500 * 4)
     terminal.setLocation(
       (screenDimension.width - terminal.getWidth) / 2,
       (screenDimension.height - terminal.getHeight) / 2
     )
     terminal.setTitle("PONTIFEX")
     terminal.setVisible(true)
-    terminal.setResizable(true)
+    terminal.setResizable(false)
 
     terminal.enableSGR(SGR.BOLD)
     terminal
@@ -148,16 +144,15 @@ object PontifexCodec extends App {
   term.flush()
   Thread.sleep(500)
   setColor('G')
-  printCursorPositionAndCharCount()
+  printInfoRow()
   printKey()
   printDeck()
   setKeyModePosition()
+  term.flush()
 
   private def setKeyModePosition(): Unit = {
     if (lang == "ru") setAbsCurPos(7, 2) else setAbsCurPos(6, 2)
   }
-
-  term.flush()
 
   while (true) {
     val k = term.readInput()
@@ -172,9 +167,9 @@ object PontifexCodec extends App {
           term.close()
           sys.exit(0)
         case 'e' =>
-          mode = switch(mode)
+          mode = switchMode(mode)
           setCharCount()
-          printCursorPositionAndCharCount()
+          printInfoRow()
         case 'k' =>
           keyIsHidden = !keyIsHidden
           if (keyIsHidden) {
@@ -182,7 +177,7 @@ object PontifexCodec extends App {
           } else {
             showKey()
           }
-          printCursorPositionAndCharCount()
+          printInfoRow()
         case 'd' =>
           deckIsHidden = !deckIsHidden
           if (deckIsHidden) {
@@ -190,18 +185,20 @@ object PontifexCodec extends App {
           } else {
             printDeck()
           }
-          printCursorPositionAndCharCount()
+          printInfoRow()
         case 'w' =>
-          printCursorPositionAndCharCount(isMessageChanging = true)
+          printInfoRow(isMessageChanging = true)
           messageIsHidden = !messageIsHidden
           if (messageIsHidden) {
             if (mode == Encoding) hideOpenMessage() else hideEncryptedMessage()
           } else {
             if (mode == Encoding) showOpenMessage() else showEncryptedMessage()
           }
-          printCursorPositionAndCharCount()
+          printInfoRow()
         case 'v' =>
+          printInfoRow(isInserting = true)
           if (mode == Encoding) enterOpenMessage() else enterEncryptedMessage()
+          printInfoRow()
         case 's' =>
           val myString = encryptedMessage
             .grouped(35)
@@ -210,7 +207,7 @@ object PontifexCodec extends App {
           val stringSelection = new StringSelection(myString)
           val clipboard = Toolkit.getDefaultToolkit.getSystemClipboard
           clipboard.setContents(stringSelection, null)
-          printCursorPositionAndCharCount()
+          printInfoRow()
         case '1' =>
           deck = pontifex.step1(deck)
           printDeck()
@@ -245,7 +242,7 @@ object PontifexCodec extends App {
     term.flush()
   }
 
-  private def switch(mode: PontifexCodecMode): PontifexCodecMode = {
+  private def switchMode(mode: PontifexCodecMode): PontifexCodecMode = {
     mode match {
       case Key =>
         setAbsCurPos(1, 5)
@@ -270,7 +267,7 @@ object PontifexCodec extends App {
         }
       case KeyType.Character =>
         val c = k.getCharacter.toChar.toUpper
-        if (pontifex.containsOpen(c)) {
+        if (pontifex.containsOpen(c) && key.length < 140) {
           key += c
           setColor('G')
           if (!keyIsHidden) term.putCharacter(c) else term.putCharacter(' ')
@@ -278,7 +275,7 @@ object PontifexCodec extends App {
         }
       case _ =>
     }
-    printCursorPositionAndCharCount()
+    printInfoRow()
   }
 
   private def decodingMode(k: KeyStroke): Unit = {
@@ -300,11 +297,16 @@ object PontifexCodec extends App {
         decode(c)
       case _ =>
     }
-    printCursorPositionAndCharCount()
+    printInfoRow()
   }
 
   private def decode(c: Char): Unit = {
-    if (pontifex.containsEncrypted(c) && charCount != -1 && (charCount - 1) <= encryptedMessage.length) {
+    if (
+      pontifex.containsEncrypted(c) &&
+      charCount != -1 &&
+      (charCount - 1) <= encryptedMessage.length &&
+      charCount <= 1050
+    ) {
       putEncryptedChar(c)
       if (keySequence.length < charCount) {
         val number: Int = generateNextKeyNumber
@@ -341,11 +343,16 @@ object PontifexCodec extends App {
         encode(c)
       case _ =>
     }
-    printCursorPositionAndCharCount()
+    printInfoRow()
   }
 
   private def encode(c: Char): Unit = {
-    if (pontifex.containsOpen(c) && charCount != -1 && (charCount - 1) <= openMessage.length) {
+    if (
+      pontifex.containsOpen(c) &&
+      charCount != -1 &&
+      (charCount - 1) <= openMessage.length &&
+      charCount <= 1050
+    ) {
       putOpenChar(c)
       if (keySequence.length < charCount) {
         val number: Int = generateNextKeyNumber
@@ -465,7 +472,7 @@ object PontifexCodec extends App {
     term.setCursorPosition(curPos.getColumn + x, curPos.getRow + y)
   }
 
-  private def curPos = {
+  private def curPos: TerminalPosition = {
     term.getCursorPosition
   }
 
@@ -473,11 +480,12 @@ object PontifexCodec extends App {
     if (int >= 0 && int < 10) s"0$int" else int.toString
   }
 
-  private def printCursorPositionAndCharCount(
-      isMessageChanging: Boolean = false): Unit = {
+  private def printInfoRow(
+      isMessageChanging: Boolean = false,
+      isInserting: Boolean = false): Unit = {
     val pos = curPos
     def saveHotkey = if (lang == "ru") "Ctrl-S:Сохр" else "Ctrl-S:Sav"
-    def pasteHotkey = if (lang == "ru") "Ctrl-V:Вст" else "Ctrl-V:Ins"
+    def pasteHotkey = redify(isInserting, if (lang == "ru") "Ctrl-V:Вст" else "Ctrl-V:Ins")
     def exitHotkey = if (lang == "ru") "Ctrl-Q:Вых" else "Ctrl-Q:Quit"
     def keyHotkey =
       if (lang == "ru") {
@@ -492,12 +500,15 @@ object PontifexCodec extends App {
         if (deckIsHidden) "Ctrl-D:ShwDec" else "Ctrl-D:HidDec"
       }
     def messageHotkey =
-      redify(if (lang == "ru") {
-        if (messageIsHidden) "Ctrl-W:ОткТек" else "Ctrl-W:СкрТек"
-      } else {
-        if (messageIsHidden) "Ctrl-W:ShwTex" else "Ctrl-W:HidTex"
-      })
-    def redify(str: String): String = if (isMessageChanging) s"[R$str]" else str
+      redify(
+        isMessageChanging,
+        if (lang == "ru") {
+          if (messageIsHidden) "Ctrl-W:ОткТек" else "Ctrl-W:СкрТек"
+        } else {
+          if (messageIsHidden) "Ctrl-W:ShwTex" else "Ctrl-W:HidTex"
+        }
+      )
+    def redify(flag: Boolean, str: String): String = if (flag) s"[R$str]" else str
     def enterHotkey = if (lang == "ru") "Enter:Слч" else "Enter:Rnd"
     val hotkeys =
       s"${mode.hotkey(lang)} | $saveHotkey | $pasteHotkey | $exitHotkey | $keyHotkey | $deckHotkey | $messageHotkey | $enterHotkey"
@@ -611,6 +622,7 @@ object PontifexCodec extends App {
       val text = Toolkit.getDefaultToolkit.getSystemClipboard.getData(DataFlavor.stringFlavor).asInstanceOf[String]
       text.foreach { c =>
         encode(c.toUpper)
+        printInfoRow(isInserting = true)
         Thread.sleep(100)
         term.flush()
       }
@@ -622,6 +634,7 @@ object PontifexCodec extends App {
       val text = Toolkit.getDefaultToolkit.getSystemClipboard.getData(DataFlavor.stringFlavor).asInstanceOf[String]
       text.foreach { c =>
         decode(c.toUpper)
+        printInfoRow(isInserting = true)
         Thread.sleep(100)
         term.flush()
       }
