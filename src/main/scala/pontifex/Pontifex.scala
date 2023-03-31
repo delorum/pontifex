@@ -150,6 +150,10 @@ class Pontifex(val alphabet1: String, val alphabet2: String, cards: Array[(Char,
     } yield randomCard).toList
   }
 
+  def randomKey(len: Int): String = {
+    (1 to len).map(_ => alphabet1((math.random * alphabet1.length).toInt)).mkString
+  }
+
   def deck(key: String, initialDeck: List[Int] = straightDeck): List[Int] = {
     val prepared = key.toUpperCase.map(replace).filter(c => alphabet1Set.contains(c)).trim
     @tailrec
