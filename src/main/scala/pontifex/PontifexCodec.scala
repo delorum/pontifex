@@ -200,7 +200,10 @@ object PontifexCodec extends App {
           if (mode == Encoding) enterOpenMessage() else enterEncryptedMessage()
           printInfoRow()
         case 's' =>
-          val myString = encryptedMessage
+          val message =
+            if (mode == Encoding) encryptedMessage
+            else openMessage
+          val myString = message
             .grouped(35)
             .map(row => row.grouped(5).map(part => part.mkString).mkString(" "))
             .mkString("\n")
@@ -437,6 +440,8 @@ object PontifexCodec extends App {
       printDeck()
       term.flush()
       deck = pontifex.countCut(amount, deck)
+      printDeck()
+      term.flush()
     }
   }
 
@@ -721,17 +726,19 @@ object PontifexCodec extends App {
   }
 
   private def moveCaret(): Unit = {
-    charCount += 1
-    if ((charCount - 1) % 350 == 0) {
-      val yPos = if (mode == Encoding) 5 else 7
-      if (curPos.getColumn > 44) setAbsCurPos(89, yPos)
-      else setAbsCurPos(45, yPos)
-    } else if ((charCount - 1) % 35 == 0) {
-      if (curPos.getColumn > 88) setAbsCurPos(89, curPos.getRow + 4)
-      else if (curPos.getColumn > 44) setAbsCurPos(45, curPos.getRow + 4)
-      else setAbsCurPos(1, curPos.getRow + 4)
-    } else if ((charCount - 1) % 5 == 0) {
-      setRelCurPos(1, 0)
+    if (charCount != -1 && charCount < 1050) {
+      charCount += 1
+      if ((charCount - 1) % 350 == 0) {
+        val yPos = if (mode == Encoding) 5 else 7
+        if (curPos.getColumn > 44) setAbsCurPos(89, yPos)
+        else setAbsCurPos(45, yPos)
+      } else if ((charCount - 1) % 35 == 0) {
+        if (curPos.getColumn > 88) setAbsCurPos(89, curPos.getRow + 4)
+        else if (curPos.getColumn > 44) setAbsCurPos(45, curPos.getRow + 4)
+        else setAbsCurPos(1, curPos.getRow + 4)
+      } else if ((charCount - 1) % 5 == 0) {
+        setRelCurPos(1, 0)
+      }
     }
   }
 
