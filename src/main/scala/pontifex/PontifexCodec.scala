@@ -199,7 +199,7 @@ object PontifexCodec extends App {
           printInfoRow(isInserting = true)
           if (mode == Encoding) enterOpenMessage() else enterEncryptedMessage()
           printInfoRow()
-        case 's' =>
+        case 's' | 'c' =>
           val message =
             if (mode == Encoding) encryptedMessage
             else openMessage
