@@ -18,8 +18,8 @@ class Pontifex(val alphabet1: String, val alphabet2: String, cards: Array[(Char,
   private val alphabet1Set: Set[Char] = alphabet1.toSet
   private val alphabet2Set: Set[Char] = alphabet2.toSet
 
-  private val letter2number1 = alphabet1.zipWithIndex.map(kv => (kv._1, kv._2 + 1)).toMap
-  private val letter2number2 = alphabet2.zipWithIndex.map(kv => (kv._1, kv._2 + 1)).toMap
+  private val letter2number1: Map[Char, Int] = alphabet1.zipWithIndex.map(kv => (kv._1, kv._2 + 1)).toMap
+  private val letter2number2: Map[Char, Int] = alphabet2.zipWithIndex.map(kv => (kv._1, kv._2 + 1)).toMap
 
   private val number2letter1 = letter2number1.map(_.swap)
   private val number2letter2 = letter2number2.map(_.swap)
