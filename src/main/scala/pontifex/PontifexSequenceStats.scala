@@ -12,7 +12,7 @@ object PontifexSequenceStats extends App {
   println(key)
   private val deck = pontifex.deck(key)
 
-  private val sequenceLength = 100000
+  private val sequenceLength = 10000
   private val pontifexSequence = pontifex.keySequence(sequenceLength, deck)
 
   FileUtils.save("pontifex.txt") { println =>
@@ -22,6 +22,21 @@ object PontifexSequenceStats extends App {
   private val randomSequence = getRandomSequence(sequenceLength)
 
   private val nonRandomSequence = (1 to 2500).flatMap(_ => pontifexSequence.take(40)).toList
+
+  val key1 = "Б23"
+  val deck1 = pontifex.deck(key1)
+  val key2 = "Б24"
+  val deck2 = pontifex.deck(key2)
+
+  val pontifexSequence1 = pontifex.keySequence(sequenceLength, deck1)
+  val pontifexSequence2 = pontifex.keySequence(sequenceLength, deck2)
+
+  val pontifexDiff = pontifexSequence1.zip(pontifexSequence2).map(x => x._1 - x._2)
+
+  private val randomSequence1 = getRandomSequence(sequenceLength)
+  private val randomSequence2 = getRandomSequence(sequenceLength)
+
+  val randomDiff = randomSequence1.zip(randomSequence2).map(x => x._1 - x._2)
 
   FileUtils.save("random.txt") { println =>
     println(randomSequence.mkString(" "))
@@ -71,7 +86,7 @@ object PontifexSequenceStats extends App {
   }
 
   // играем в кости: бросаем 5 кубиков, считаем сумму. Распределение частот выпавших сумм должны подчиняться нормальному распределению
-  // данные сохраняются в файле, совместимом с gnuplot: pplot 'stat3.dat' with linespoints; replot 'stat3_random.dat' with linespoints;
+  // данные сохраняются в файле, совместимом с gnuplot: plot 'stat3_pontifex.dat' with linespoints; replot 'stat3_random.dat' with linespoints;
   def stat3(sequence: List[Int], fileName: String = "stat3.dat"): Unit = {
     val a = sequence
       .grouped(5)
@@ -125,31 +140,31 @@ object PontifexSequenceStats extends App {
   }
 
   // println(decrypt(key))
-  println("======pontifex======")
-  stat1(pontifexSequence)
-  println("======random======")
-  stat1(randomSequence)
+  println("======stat1:pontifex======")
+  stat1(pontifexDiff)
+  println("======stat1:random======")
+  stat1(randomDiff)
   /*  println("======nonrandom======")
   stat1(nonRandomSequence)*/
 
-  println("======pontifex======")
-  stat2(pontifexSequence)
-  println("======random======")
-  stat2(randomSequence)
+  println("======stat2:pontifex======")
+  stat2(pontifexDiff)
+  println("======stat2:random======")
+  stat2(randomDiff)
   /*  println("======nonrandom======")
   stat2(nonRandomSequence)*/
 
-  println("======pontifex======")
-  stat3(pontifexSequence, fileName = "stat3_pontifex.dat")
-  println("======random======")
-  stat3(randomSequence, fileName = "stat3_random.dat")
+  println("======stat3:pontifex======")
+  stat3(pontifexDiff, fileName = "stat3_pontifex.dat")
+  println("======stat3:random======")
+  stat3(randomDiff, fileName = "stat3_random.dat")
   /*  println("======nonrandom======")
   stat3(nonRandomSequence, fileName = "stat3_nonrandom.dat")*/
 
-  println("======pontifex======")
-  stat4(pontifexSequence)
-  println("======random======")
-  stat4(randomSequence)
+  println("======stat4:pontifex======")
+  stat4(pontifexDiff)
+  println("======stat4:random======")
+  stat4(randomDiff)
   /*  println("======nonrandom======")
   stat4(nonRandomSequence)*/
 }
