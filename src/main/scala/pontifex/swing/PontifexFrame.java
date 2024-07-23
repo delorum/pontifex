@@ -98,6 +98,10 @@ public class PontifexFrame extends JFrame {
         });
     }
 
+    public void focusOnInput() {
+        inputTextArea.requestFocusInWindow();
+    }
+
     public String getDate() {
         return dateTextField.getText();
     }

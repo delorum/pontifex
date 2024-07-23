@@ -1,12 +1,14 @@
 package pontifex
 
+import pontifex.utils.PontifexUtils
+
 import scala.annotation.tailrec
 import scala.collection.mutable.ArrayBuffer
 
 object PontifexSequenceStats extends App {
 
   private val pontifex: Pontifex =
-    PontifexCodec.loadFromConfigStream(this.getClass.getResourceAsStream("/default2.conf"))._1
+    PontifexUtils.loadFromConfigStream(this.getClass.getResourceAsStream("/default2.conf"))._1
 
   private val key = pontifex.randomKey(80)
   println(key)

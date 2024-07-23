@@ -16,6 +16,7 @@ object PontifexSwingApp extends App {
       var pin: String = ""
       var mode: CodeMode = CodeMode.Unknown
       var inputText: String = ""
+      var pinIsCorrect = false
       while (true) {
         if (
           frame.getPin.nonEmpty && (mode != getCodeMode || pin != frame.getPin || date != frame.getDate ||
@@ -28,14 +29,17 @@ object PontifexSwingApp extends App {
           count = frame.getCount
           try {
             val workResult = FastEncode.doWork(inputText, date, count, mode, pin)
+            if (!pinIsCorrect) {
+              frame.focusOnInput()
+              pinIsCorrect = true
+            }
             frame.setResultText(workResult.result)
             frame.setControlText(workResult.control)
           } catch {
             case t: Throwable =>
-              /*frame.setResultText(t.getClass.toString + ": " + t.getLocalizedMessage)
-              frame.setControlText(t.getClass.toString + ": " + t.getLocalizedMessage)*/
-              frame.setResultText("error")
-              frame.setControlText("error")
+              val str = t.getStackTrace.mkString("at ", "\nat ", "")
+              frame.setResultText(t.getClass.toString + ": " + t.getLocalizedMessage + "\n" + str)
+              frame.setControlText(t.getClass.toString + ": " + t.getLocalizedMessage + "\n" + str)
           }
         }
         Thread.sleep(1000)

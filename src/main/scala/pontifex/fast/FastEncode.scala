@@ -1,12 +1,14 @@
 package pontifex.fast
 
-import pontifex.PontifexCodec.loadFromConfigStream
+import pontifex.utils.PontifexUtils
 
 import scala.annotation.tailrec
 import scala.sys.process._
 
 object FastEncode {
-  private val (pontifex, _) = loadFromConfigStream(this.getClass.getResourceAsStream("/default2.conf"))
+  private val (pontifex, _) = PontifexUtils.loadFromConfigStream(this.getClass.getResourceAsStream("/default2.conf"))
+
+  def containsOpen(c: Char): Boolean = pontifex.containsOpen(c)
 
   def doWork(text: String, date: String, count: Long, mode: CodeMode, pin: String): WorkResult = {
     val keyBytes = readKeyBytes(pin)

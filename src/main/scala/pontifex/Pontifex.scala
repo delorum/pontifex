@@ -178,7 +178,8 @@ class Pontifex(val alphabet1: String, val alphabet2: String, cards: Array[(Char,
   }
 
   private def replace(c: Char): Char = {
-    replaces.getOrElse(c, c)
+    if (c == '\n') replace(' ')
+    else replaces.getOrElse(c, c)
   }
 
   def encryptSymbol(d: Char, s: Int): Char = {

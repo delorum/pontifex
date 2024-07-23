@@ -5,12 +5,11 @@ import com.googlecode.lanterna.input.{KeyStroke, KeyType}
 import com.googlecode.lanterna.terminal.{DefaultTerminalFactory, Terminal}
 import com.googlecode.lanterna.{SGR, TerminalPosition, TerminalSize}
 import pontifex.PontifexCodecMode.{Decoding, Encoding, Key}
+import pontifex.utils.PontifexUtils.loadFromConfigStream
 
 import java.awt.Toolkit
 import java.awt.datatransfer.{DataFlavor, StringSelection}
-import java.io.{FileInputStream, InputStream, InputStreamReader}
-import java.nio.charset.Charset
-import java.util.Properties
+import java.io.FileInputStream
 import scala.annotation.tailrec
 import scala.collection.mutable.ArrayBuffer
 
@@ -36,34 +35,8 @@ object PontifexCodec extends App {
     loadFromConfigStream(this.getClass.getResourceAsStream("/default.conf"))
   }
 
-  def loadFromConfigStream(in: InputStream): (Pontifex, String) = {
-    val config = new Properties()
-    config.load(new InputStreamReader(in, Charset.forName("UTF-8")))
-    val alphabet1 = config.getProperty("alphabet1")
-    require(alphabet1 != null, "alphabet required")
-    val alphabet2 = config.getProperty("alphabet2", alphabet1)
-    val cards = {
-      val cardSymbols =
-        config.getProperty("cards", alphabet2 + alphabet2 + alphabet2.take(2))
-      val cardColors = config.getProperty(
-        "cardColors",
-        alphabet2.map(_ => 'C') + alphabet2
-          .map(_ => 'B') + alphabet2.take(2).map(_ => 'R')
-      )
-      cardSymbols.zip(cardColors).toArray
-    }
-    val lang = config.getProperty("lang", "en")
-    require(lang == "ru" || lang == "en", "only ru and en lang are supported")
-
-    val replaces = config.getProperty("replaces", "")
-    val replacesMap: Map[Char, Char] =
-      if (replaces.isEmpty) Map.empty
-      else replaces.split(" ").map(kv => (kv.head, kv(1))).toMap
-    (new Pontifex(alphabet1, alphabet2, cards, replacesMap), lang)
-  }
-
-  val keyWord = if (lang == "ru") "Ключ: " else "Key: "
-  val deckWord = if (lang == "ru") "Карты: " else "Deck: "
+  private val keyWord = if (lang == "ru") "Ключ: " else "Key: "
+  private val deckWord = if (lang == "ru") "Карты: " else "Deck: "
 
   private var deck = pontifex.straightDeck
 
