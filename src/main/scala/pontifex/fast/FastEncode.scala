@@ -16,19 +16,17 @@ object FastEncode {
     val key = keyPrefix + date.replace("-", "") + (if (count > 1) count.toString else "")
     mode match {
       case CodeMode.Encode =>
-        val preparedText = pad("." + text.filter(c => pontifex.containsOpen(c)) + ".")
+        val (preparedText, blocksDividedBy) = pad("." + text.filter(c => pontifex.containsOpen(c)) + ".")
         val encrypted = pontifex.encrypt(preparedText, key)
-        val blocks = encrypted.length / 5
-        val blocksDividedBy = if (blocks % 5 == 0) 5 else if (blocks % 6 == 0) 6 else 7
-        val result = encrypted.grouped(5 * blocksDividedBy).map(s => s.grouped(5).mkString(" ")).mkString("\n")
+        val result = encrypted.grouped(5 * blocksDividedBy).map(s => s.grouped(5).mkString(" ")).mkString(" ")
         val control = pontifex.decrypt(encrypted, key)
         WorkResult(result, control)
       case CodeMode.Decode =>
         val result = pontifex.decrypt(text, key)
         val encrypted = pontifex.encrypt(result, key)
         val blocks = encrypted.length / 5
-        val blocksDividedBy = if (blocks % 5 == 0) 5 else if (blocks % 6 == 0) 6 else 7
-        val control = encrypted.grouped(5 * blocksDividedBy).map(s => s.grouped(5).mkString(" ")).mkString("\n")
+        val blocksDividedBy = (21 to 1 by -1).find(by => blocks % by == 0).getOrElse(blocks)
+        val control = encrypted.grouped(5 * blocksDividedBy).map(s => s.grouped(5).mkString(" ")).mkString(" ")
         WorkResult(result, control)
     }
   }
@@ -55,22 +53,28 @@ object FastEncode {
     str.init.split(" ").map(_.toByte)
   }
 
-  @tailrec private def pad(s: String, firstPartCount: Int = 0, lastPartCount: Int = 0): String = {
+  private def pad(s: String, firstPartCount: Int = 0, lastPartCount: Int = 0): (String, Int) = {
+    val blocksCount = s.length / 5
+
     def blocksCountDividedBy(by: Int): Boolean = {
-      (s.length / 5) % by == 0
+      blocksCount % by == 0
     }
     val dividedBy5 = s.length % 5 == 0
-    val blocksCountOk = blocksCountDividedBy(5) || blocksCountDividedBy(6) || blocksCountDividedBy(7)
     val firstPartOk = firstPartCount >= 5
     val lastPartOk = lastPartCount >= 5
-    if (dividedBy5 && blocksCountOk && firstPartOk && lastPartOk) s
-    else {
+
+    def continue = {
       if (lastPartCount >= firstPartCount) {
         pad(pontifex.getRandomOpenSymbol.toString + s, firstPartCount + 1, lastPartCount)
       } else {
         pad(s + pontifex.getRandomOpenSymbol.toString, firstPartCount, lastPartCount + 1)
       }
-
     }
+
+    if (dividedBy5 && firstPartOk && lastPartOk) {
+      if (blocksCount < 22) (s, blocksCount)
+      else if (blocksCountDividedBy(22)) (s, 22)
+      else continue
+    } else continue
   }
 }
